@@ -119,10 +119,10 @@
 
         // --- LÓGICA DE TOOLTIPS ---
         async function mostrarTooltipProblema(viaId, targetElement) {
+            if (!targetElement) return;
             const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single();
             if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } 
             else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; }
-            
             const rect = targetElement.getBoundingClientRect();
             tooltipProblema.style.left = `${rect.left + window.scrollX}px`;
             tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`;
@@ -150,10 +150,10 @@
                     viaBox.dataset.viaStatus = via.status;
                     
                     if (via.status === 'problema') {
-                        viaBox.addEventListener('mouseenter', (event) => {
+                        viaBox.addEventListener('mouseenter', () => {
                             clearTimeout(tooltipTimer);
                             tooltipTimer = setTimeout(() => {
-                                mostrarTooltipProblema(via.id, event.currentTarget);
+                                mostrarTooltipProblema(via.id, viaBox); 
                             }, 150);
                         });
                         viaBox.addEventListener('mouseleave', () => {
@@ -163,7 +163,6 @@
                     }
 
                     viaBox.addEventListener('click', () => mostrarModal(via));
-                    
                     const grupoId = via.numero_via <= 40 ? 'grupo-1-40' : via.numero_via <= 44 ? 'grupo-43-44' : via.numero_via <= 47 ? 'grupo-46-47' : 'grupo-50-51';
                     document.getElementById(grupoId).appendChild(viaBox);
                 }
@@ -196,7 +195,6 @@
             loaders.forEach(l => l.style.display = 'flex');
             listaPendientes.innerHTML = '';
             listaHistorial.innerHTML = '';
-
             try {
                 const { data: pendientes, error: errPend } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', false).order('created_at', { ascending: true });
                 if (errPend) throw errPend;
@@ -205,13 +203,11 @@
                 } else {
                     listaPendientes.innerHTML = '<li>No hay tareas pendientes.</li>';
                 }
-
                 const NOVEDADES_PER_PAGE = 5;
                 const from = (historialPage - 1) * NOVEDADES_PER_PAGE;
                 const to = from + NOVEDADES_PER_PAGE - 1;
                 const { count, error: errCount } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', true);
                 if (errCount) throw errCount;
-
                 const { data: resueltas, error: errRes } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', true).order('created_at', { ascending: false }).range(from, to);
                 if (errRes) throw errRes;
                 if (resueltas.length > 0) {
@@ -233,21 +229,11 @@
             item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente';
             item.dataset.novedadId = novedad.id;
             const fechaLocal = new Date(novedad.created_at).toLocaleString('es-AR');
-
-            let botonesAccion = `
-                <button class="btn-editar" title="Editar">✏️</button>
-                <button class="btn-eliminar" title="Eliminar">🗑️</button>`;
-            
+            let botonesAccion = `<button class="btn-editar" title="Editar">✏️</button><button class="btn-eliminar" title="Eliminar">🗑️</button>`;
             if (!esResuelta) {
                 botonesAccion = `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>` + botonesAccion;
             }
-
-            item.innerHTML = `
-                <div class="novedad-contenido">
-                    <span class="meta-info">${fechaLocal} - ${novedad.user_email || 'Sistema'}</span>
-                    <p class="descripcion-texto">${novedad.descripcion}</p>
-                </div>
-                <div class="novedad-acciones">${botonesAccion}</div>`;
+            item.innerHTML = `<div class="novedad-contenido"><span class="meta-info">${fechaLocal} - ${novedad.user_email || 'Sistema'}</span><p class="descripcion-texto">${novedad.descripcion}</p></div><div class="novedad-acciones">${botonesAccion}</div>`;
             return item;
         }
 
@@ -255,9 +241,7 @@
             const { error } = await supabase.from('novedades').update({ resuelta: true }).eq('id', novedadId);
             if (error) { mostrarNotificacion('Error al resolver la tarea.', 'error'); return; }
             mostrarNotificacion('Tarea marcada como resuelta.');
-            
             const { count } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', false);
-            
             if (count === 0 && viaActualModal.status !== 'normal') {
                 const { error: updateError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaActualModal.id);
                 if (!updateError) {
