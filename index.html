@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Vías de Peaje v3.1 - Editor</title>
+    <title>Control de Vías de Peaje v3.2 - Final</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,12 +63,12 @@
         .grupos-secundarios-container { display: flex; gap: 25px; justify-content: space-between; margin-bottom: 25px; }
         .grupos-secundarios-container .grupo-vias { flex-grow: 1; margin-bottom: 0; }
 
-        /* --- [MODIFICADO] ESTILOS TOOLTIP/POP-UP --- */
-        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
-        #tooltip-problema.visible { opacity: 1; transition: opacity 0.2s; /* La transición solo se aplica al aparecer */ }
+        /* --- ESTILOS TOOLTIP/POP-UP --- */
+        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); transition: opacity 0.2s; }
+        #tooltip-problema.visible { opacity: 1; }
         #tooltip-problema strong { display: block; margin-bottom: 5px; border-bottom: 1px solid rgba(236, 239, 244, 0.5); padding-bottom: 5px; }
 
-        /* --- [MODIFICADO] ESTILOS MODAL CON TABS Y EDITOR --- */
+        /* --- ESTILOS MODAL CON TABS Y EDITOR --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background-color: #eceff4; color: #2e3440; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
@@ -88,7 +88,7 @@
         .novedad-pendiente { border-left: 5px solid #ebcb8b; }
         .novedad-resuelta { border-left: 5px solid #a3be8c; }
         
-        .novedad-contenido { flex-grow: 1; word-break: break-word; } /* Evita que el texto largo se desborde */
+        .novedad-contenido { flex-grow: 1; word-break: break-word; }
         .meta-info { display: block; font-size: 0.8em; color: #4c566a; margin-bottom: 5px; }
         .novedad-acciones button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.2em; border-radius: 4px; transition: transform 0.1s; }
         .novedad-acciones button:hover { transform: scale(1.2); }
@@ -137,6 +137,7 @@
         const loginContainer = document.getElementById('login-container'), mainContent = document.getElementById('main-content'), modal = document.getElementById('modal-via'), searchBox = document.getElementById('search-box'), filterButtons = document.querySelectorAll('.filter-buttons button'), tooltipProblema = document.getElementById('tooltip-problema'), loginForm = document.getElementById('login-form'), loginButton = document.getElementById('login-button'), loginError = document.getElementById('login-error'), logoutButton = document.getElementById('logout-button'), userEmailDisplay = document.getElementById('user-email-display'), userRoleDisplay = document.getElementById('user-role-display'), closeButton = document.querySelector('.close-button'), formNovedad = document.getElementById('form-novedad');
             
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
+        let tooltipTimer = null;
 
         // --- LÓGICA DE TOOLTIPS ---
         async function mostrarTooltipProblema(viaId, targetElement) {
@@ -152,10 +153,6 @@
 
         function ocultarTooltip() {
             tooltipProblema.classList.remove('visible');
-            tooltipProblema.style.transition = 'none'; // Eliminar transición para desaparición instantánea
-            setTimeout(() => {
-                tooltipProblema.style.transition = ''; // Restaurar para la próxima vez
-            }, 0);
         }
 
         // --- LÓGICA PRINCIPAL ---
@@ -175,8 +172,16 @@
                     viaBox.dataset.viaStatus = via.status;
                     
                     if (via.status === 'problema') {
-                        viaBox.addEventListener('mouseenter', () => mostrarTooltipProblema(via.id, viaBox));
-                        viaBox.addEventListener('mouseleave', ocultarTooltip);
+                        viaBox.addEventListener('mouseenter', (event) => {
+                            clearTimeout(tooltipTimer);
+                            tooltipTimer = setTimeout(() => {
+                                mostrarTooltipProblema(via.id, event.currentTarget);
+                            }, 150);
+                        });
+                        viaBox.addEventListener('mouseleave', () => {
+                            clearTimeout(tooltipTimer);
+                            ocultarTooltip();
+                        });
                     }
 
                     viaBox.addEventListener('click', () => mostrarModal(via));
@@ -279,7 +284,7 @@
                 const { error: updateError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaActualModal.id);
                 if (!updateError) {
                     mostrarNotificacion(`Vía ${viaActualModal.numero_via} pasada a estado Normal.`, 'success');
-                    await cargarVias(); // ACTUALIZACIÓN INSTANTÁNEA
+                    await cargarVias(); 
                 }
             } else {
                 await cargarNovedadesModal(); 
@@ -299,7 +304,6 @@
                 toast.addEventListener('transitionend', () => toast.remove());
             }, 3000);
         }
-
         function actualizarDashboard() {
             const counts = todasLasVias.reduce((acc, via) => {
                 acc[via.status] = (acc[via.status] || 0) + 1;
@@ -309,7 +313,6 @@
             document.getElementById('stat-count-revisar').textContent = counts.revisar || 0;
             document.getElementById('stat-count-normal').textContent = counts.normal || 0;
         }
-
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) {
             const paginationContainer = document.getElementById('historial-pagination');
             paginationContainer.innerHTML = '';
@@ -327,9 +330,7 @@
             nextButton.onclick = () => cargarNovedadesModal(currentPage + 1);
             paginationContainer.append(prevButton, pageInfo, nextButton);
         }
-
         function filtrarHistorial() { /* Implementación futura */ }
-
         const handleLogin = async (event) => {
             event.preventDefault();
             loginButton.disabled = true;
@@ -359,7 +360,6 @@
                 loginButton.textContent = 'Acceder';
             }
         };
-
         const checkUser = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
@@ -378,7 +378,6 @@
                 mainContent.style.display = 'none';
             }
         };
-
         const handleLogout = async () => {
             if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; }
             await supabase.auth.signOut();
@@ -387,12 +386,10 @@
             currentUserEmail = null;
             currentUserRole = 'operator';
         };
-
         function cerrarModal() {
             modal.style.display = 'none';
             viaActualModal = null;
         }
-
         async function manejarSubmitNovedad(event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -412,7 +409,7 @@
                 if (nuevoStatus !== viaActualModal.status) {
                     const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia);
                     if (updateError) throw updateError;
-                    await cargarVias(); // ACTUALIZACIÓN INSTANTÁNEA
+                    await cargarVias(); 
                 }
                 
                 mostrarNotificacion('Tarea agregada con éxito!');
@@ -426,7 +423,6 @@
                 submitButton.textContent = 'Guardar';
             }
         }
-
         function filtrarVias() {
             const textoBusqueda = searchBox.value.toLowerCase();
             document.querySelectorAll('.grupo-vias').forEach(grupo => {
@@ -446,7 +442,6 @@
                 mensajeVacio.style.display = viasVisibles === 0 ? 'block' : 'none';
             });
         }
-
         function escucharCambiosVias() {
             if (canalVias) return;
             canalVias = supabase.channel('cambios-db-vias')
@@ -479,21 +474,18 @@
                     filtrarVias();
                 });
             });
-
             document.getElementById('tab-pendientes').addEventListener('click', (e) => {
                 document.getElementById('content-pendientes').classList.add('active');
                 document.getElementById('content-historial').classList.remove('active');
                 e.target.classList.add('active');
                 document.getElementById('tab-historial').classList.remove('active');
             });
-
             document.getElementById('tab-historial').addEventListener('click', (e) => {
                 document.getElementById('content-historial').classList.add('active');
                 document.getElementById('content-pendientes').classList.remove('active');
                 e.target.classList.add('active');
                 document.getElementById('tab-pendientes').classList.remove('active');
             });
-
             document.querySelector('.tasks-section').addEventListener('click', async (e) => {
                 const target = e.target;
                 const itemLi = target.closest('li');
@@ -543,3 +535,4 @@
     </script>
 </body>
 </html>
+
