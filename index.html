@@ -313,8 +313,7 @@
                         item.dataset.novedadId = novedad.id;
                         item.dataset.fecha = novedad.created_at;
                         const fechaLocal = new Date(novedad.created_at).toLocaleString('es-AR');
-                        const esPropietario = novedad.user_email === currentUserEmail;
-                        const puedeModificar = esPropietario || currentUserRole === 'admin';
+                        const puedeModificar = true;
                         item.innerHTML = `
                             <div class="novedad-contenido">
                                 <span class="meta-info"><span class="fecha">${fechaLocal}</span> - <span class="usuario">${novedad.user_email || 'Sistema'}</span></span>
@@ -549,3 +548,4 @@
     </script>
 </body>
 </html>
+
