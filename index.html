@@ -149,7 +149,6 @@
                     viaBox.dataset.viaId = via.id;
                     viaBox.dataset.viaStatus = via.status;
                     
-                    // [CORRECCIÓN] Lógica del tooltip reinsertada aquí
                     if (via.status === 'problema') {
                         viaBox.addEventListener('mouseenter', (event) => {
                             clearTimeout(tooltipTimer);
@@ -419,6 +418,7 @@
                 } catch (error) {
                     console.error('Error en la búsqueda:', error);
                     mostrarNotificacion('Error al realizar la búsqueda.', 'error');
+                    return; // Detener la ejecución si hay error
                 }
             }
 
@@ -525,3 +525,4 @@
     </script>
 </body>
 </html>
+
