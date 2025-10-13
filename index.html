@@ -100,7 +100,6 @@
 <body>
     <div id="login-container"><h1>Iniciar Sesión</h1><form id="login-form"><div class="input-group"><label for="email">Usuario (Email)</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Contraseña</label><input type="password" id="password" required></div><button type="submit" id="login-button">Acceder</button><p id="login-error">Usuario o contraseña incorrectos.</p></form></div>
     <div id="main-content" style="display: none; width: 100%;"><header><h1>Sistema de Control y Novedades de Vías</h1><div id="user-info"><span id="user-email-display" style="margin-right: 15px; font-style: italic;"></span><span id="user-role-display"></span><button id="logout-button">Cerrar Sesión</button></div></header><main class="container"><div class="dashboard-stats"><div class="stat-box" id="stat-problema"><h3>Con Problema</h3><div class="stat-number" id="stat-count-problema">0</div></div><div class="stat-box" id="stat-revisar"><h3>Para Revisar</h3><div class="stat-number" id="stat-count-revisar">0</div></div><div class="stat-box" id="stat-normal"><h3>Normales</h3><div class="stat-number" id="stat-count-normal">0</div></div></div><div class="controles-vias">
-        <!-- [MODIFICADO] Placeholder actualizado -->
         <input type="search" id="search-box" placeholder="Buscar por número de vía o tarea...">
         <div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div><div class="grupo-vias" id="container-1-40"><div class="loader-container"><div class="spinner"></div></div><h2>RICCHERI (Vías 1 - 40)</h2><div id="grupo-1-40" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupos-secundarios-container"><div class="grupo-vias" id="container-43-44"><div class="loader-container"><div class="spinner"></div></div><h2>DONOVAN (Vías 43 - 44)</h2><div id="grupo-43-44" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-46-47"><div class="loader-container"><div class="spinner"></div></div><h2>BOULOGNE SUR MER (Vías 46 - 47)</h2><div id="grupo-46-47" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-50-51"><div class="loader-container"><div class="spinner"></div></div><h2>MERCADO CENTRAL (Vías 50 - 51)</h2><div id="grupo-50-51" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div></div></main></div>
     <div id="modal-via" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h2 id="modal-title"></h2><div class="modal-body"><div class="tasks-section"><div class="modal-tabs"><button id="tab-pendientes" class="active">Pendientes</button><button id="tab-historial">Historial</button></div><div id="content-pendientes" class="tab-content active"><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-pendientes" style="list-style-type: none; padding: 0;"></ul></div></div><div id="content-historial" class="tab-content"><div class="historial-filtros"><input type="search" id="historial-search" placeholder="Buscar en el historial..."><input type="date" id="historial-date-picker"></div><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-historial" style="list-style-type: none; padding: 0;"></ul></div><div id="historial-pagination" class="pagination-controls"></div></div></div><div class="form-section"><h3>Agregar Tarea</h3><form id="form-novedad"><input type="hidden" id="via-id-input"><label for="descripcion-novedad">Nueva Tarea:</label><textarea id="descripcion-novedad" rows="4" placeholder="Describir la tarea pendiente..."></textarea><label for="status-via">Estado de la Vía:</label><select id="status-via"><option value="normal">Normal (Verde)</option><option value="revisar">Revisar (Amarillo)</option><option value="problema">Problema (Rojo)</option></select><button type="submit">Guardar</button></form></div></div></div></div>
@@ -169,7 +168,7 @@
                     document.getElementById(grupoId).appendChild(viaBox);
                 }
                 actualizarDashboard();
-                await filtrarVias(); // Cambiado para que espere a que termine el filtro inicial
+                await filtrarVias();
             } catch (error) {
                 console.error('Error al cargar las vías:', error);
                 mostrarNotificacion('No se pudieron cargar los datos.', 'error');
@@ -179,23 +178,230 @@
         }
         
         // --- LÓGICA DEL MODAL ---
-        async function mostrarModal(via) { /* ...código sin cambios... */ }
-        async function cargarNovedadesModal(historialPage = 1) { /* ...código sin cambios... */ }
-        function crearItemNovedad(novedad, esResuelta) { /* ...código sin cambios... */ }
-        async function resolverNovedad(novedadId) { /* ...código sin cambios... */ }
+        async function mostrarModal(via) {
+            viaActualModal = via;
+            document.getElementById('modal-title').textContent = `Tareas y Novedades - Vía ${via.numero_via}`;
+            document.getElementById('via-id-input').value = via.id;
+            document.getElementById('status-via').value = via.status;
+            document.getElementById('descripcion-novedad').value = '';
+            document.getElementById('tab-pendientes').click();
+            modal.style.display = 'block';
+            await cargarNovedadesModal();
+        }
+
+        async function cargarNovedadesModal(historialPage = 1) {
+            const listaPendientes = document.getElementById('lista-pendientes');
+            const listaHistorial = document.getElementById('lista-historial');
+            const loaders = document.querySelectorAll('.novedades-container .loader-container');
+            loaders.forEach(l => l.style.display = 'flex');
+            listaPendientes.innerHTML = '';
+            listaHistorial.innerHTML = '';
+
+            try {
+                const { data: pendientes, error: errPend } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', false).order('created_at', { ascending: true });
+                if (errPend) throw errPend;
+                if (pendientes.length > 0) {
+                    pendientes.forEach(n => listaPendientes.appendChild(crearItemNovedad(n, false)));
+                } else {
+                    listaPendientes.innerHTML = '<li>No hay tareas pendientes.</li>';
+                }
+
+                const NOVEDADES_PER_PAGE = 5;
+                const from = (historialPage - 1) * NOVEDADES_PER_PAGE;
+                const to = from + NOVEDADES_PER_PAGE - 1;
+                const { count, error: errCount } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', true);
+                if (errCount) throw errCount;
+
+                const { data: resueltas, error: errRes } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', true).order('created_at', { ascending: false }).range(from, to);
+                if (errRes) throw errRes;
+                if (resueltas.length > 0) {
+                    resueltas.forEach(n => listaHistorial.appendChild(crearItemNovedad(n, true)));
+                } else {
+                    listaHistorial.innerHTML = '<li>No hay historial de tareas resueltas.</li>';
+                }
+                renderizarControlesPaginacion(historialPage, count, NOVEDADES_PER_PAGE);
+            } catch (error) {
+                console.error("Error cargando novedades:", error);
+                mostrarNotificacion('Error al cargar las tareas.', 'error');
+            } finally {
+                loaders.forEach(l => l.style.display = 'none');
+            }
+        }
+
+        function crearItemNovedad(novedad, esResuelta) {
+            const item = document.createElement('li');
+            item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente';
+            item.dataset.novedadId = novedad.id;
+            const fechaLocal = new Date(novedad.created_at).toLocaleString('es-AR');
+
+            let botonesAccion = `
+                <button class="btn-editar" title="Editar">✏️</button>
+                <button class="btn-eliminar" title="Eliminar">🗑️</button>`;
+            
+            if (!esResuelta) {
+                botonesAccion = `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>` + botonesAccion;
+            }
+
+            item.innerHTML = `
+                <div class="novedad-contenido">
+                    <span class="meta-info">${fechaLocal} - ${novedad.user_email || 'Sistema'}</span>
+                    <p class="descripcion-texto">${novedad.descripcion}</p>
+                </div>
+                <div class="novedad-acciones">${botonesAccion}</div>`;
+            return item;
+        }
+
+        async function resolverNovedad(novedadId) {
+            const { error } = await supabase.from('novedades').update({ resuelta: true }).eq('id', novedadId);
+            if (error) { mostrarNotificacion('Error al resolver la tarea.', 'error'); return; }
+            mostrarNotificacion('Tarea marcada como resuelta.');
+            
+            const { count } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', false);
+            
+            if (count === 0 && viaActualModal.status !== 'normal') {
+                const { error: updateError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaActualModal.id);
+                if (!updateError) {
+                    mostrarNotificacion(`Vía ${viaActualModal.numero_via} pasada a estado Normal.`, 'success');
+                    await cargarVias(); 
+                }
+            } else {
+                await cargarNovedadesModal(); 
+            }
+        }
 
         // --- RESTO DE FUNCIONES ---
-        function mostrarNotificacion(mensaje, tipo = 'success') { /* ...código sin cambios... */ }
-        function actualizarDashboard() { /* ...código sin cambios... */ }
-        function renderizarControlesPaginacion(currentPage, totalItems, perPage) { /* ...código sin cambios... */ }
-        function filtrarHistorial() { /* ...código sin cambios... */ }
-        const handleLogin = async (event) => { /* ...código sin cambios... */ };
-        const checkUser = async () => { /* ...código sin cambios... */ };
-        const handleLogout = async () => { /* ...código sin cambios... */ };
-        function cerrarModal() { /* ...código sin cambios... */ }
-        async function manejarSubmitNovedad(event) { /* ...código sin cambios... */ }
-
-        // --- [MODIFICADO] BUSCADOR AVANZADO ---
+        function mostrarNotificacion(mensaje, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            toast.textContent = mensaje;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3000);
+        }
+        function actualizarDashboard() {
+            const counts = todasLasVias.reduce((acc, via) => {
+                acc[via.status] = (acc[via.status] || 0) + 1;
+                return acc;
+            }, {});
+            document.getElementById('stat-count-problema').textContent = counts.problema || 0;
+            document.getElementById('stat-count-revisar').textContent = counts.revisar || 0;
+            document.getElementById('stat-count-normal').textContent = counts.normal || 0;
+        }
+        function renderizarControlesPaginacion(currentPage, totalItems, perPage) {
+            const paginationContainer = document.getElementById('historial-pagination');
+            paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(totalItems / perPage);
+            if (totalPages <= 1) return;
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Anterior';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => cargarNovedadesModal(currentPage - 1);
+            const pageInfo = document.createElement('span');
+            pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Siguiente';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => cargarNovedadesModal(currentPage + 1);
+            paginationContainer.append(prevButton, pageInfo, nextButton);
+        }
+        function filtrarHistorial() { /* Implementación futura */ }
+        const handleLogin = async (event) => {
+            event.preventDefault();
+            loginButton.disabled = true;
+            loginButton.textContent = 'Accediendo...';
+            loginError.style.display = 'none';
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+                if (profileError) throw profileError;
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                currentUserEmail = data.user.email;
+                currentUserRole = profile.role || 'operator';
+                userEmailDisplay.textContent = currentUserEmail;
+                userRoleDisplay.textContent = currentUserRole;
+                await cargarVias();
+                escucharCambiosVias();
+            } catch (error) {
+                console.error('Error de login:', error.message);
+                loginError.style.display = 'block';
+                mostrarNotificacion('Usuario o contraseña incorrectos.', 'error');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Acceder';
+            }
+        };
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+                if (profileError) { await handleLogout(); return; }
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                currentUserEmail = session.user.email;
+                currentUserRole = profile.role || 'operator';
+                userEmailDisplay.textContent = currentUserEmail;
+                userRoleDisplay.textContent = currentUserRole;
+                await cargarVias();
+                escucharCambiosVias();
+            } else {
+                loginContainer.style.display = 'block';
+                mainContent.style.display = 'none';
+            }
+        };
+        const handleLogout = async () => {
+            if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; }
+            await supabase.auth.signOut();
+            mainContent.style.display = 'none';
+            loginContainer.style.display = 'block';
+            currentUserEmail = null;
+            currentUserRole = 'operator';
+        };
+        function cerrarModal() {
+            modal.style.display = 'none';
+            viaActualModal = null;
+        }
+        async function manejarSubmitNovedad(event) {
+            event.preventDefault();
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Guardando...';
+            try {
+                const idVia = document.getElementById('via-id-input').value;
+                const nuevaDescripcion = document.getElementById('descripcion-novedad').value.trim();
+                const nuevoStatus = document.getElementById('status-via').value;
+                if (!nuevaDescripcion) { mostrarNotificacion('La descripción de la tarea no puede estar vacía.', 'error'); return; }
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) { mostrarNotificacion('Sesión expirada.', 'error'); return; }
+                
+                const { error: insertError } = await supabase.from('novedades').insert([{ via_id: idVia, descripcion: nuevaDescripcion, user_email: user.email, resuelta: false }]);
+                if (insertError) throw insertError;
+                
+                if (nuevoStatus !== viaActualModal.status) {
+                    const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia);
+                    if (updateError) throw updateError;
+                    await cargarVias(); 
+                }
+                
+                mostrarNotificacion('Tarea agregada con éxito!');
+                await cargarNovedadesModal();
+                document.getElementById('descripcion-novedad').value = '';
+            } catch (error) {
+                console.error('Error al guardar:', error);
+                mostrarNotificacion('Error al guardar la tarea.', 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Guardar';
+            }
+        }
+        
         async function filtrarVias() {
             const textoBusqueda = searchBox.value.trim().toLowerCase();
             const todasLasViasBoxes = document.querySelectorAll('.via-box');
@@ -220,9 +426,6 @@
                 const viasEnGrupo = grupo.querySelectorAll('.via-box');
                 viasEnGrupo.forEach(via => {
                     const coincideFiltroStatus = (filtroActivo === 'todos') || (via.dataset.viaStatus === filtroActivo);
-                    
-                    // Si no hay texto de búsqueda, solo filtramos por status.
-                    // Si hay texto, filtramos por IDs coincidentes Y por status.
                     const coincideBusqueda = !textoBusqueda || idsCoincidentes.has(via.dataset.viaId);
                     
                     if (coincideBusqueda && coincideFiltroStatus) {
@@ -237,14 +440,19 @@
             });
         }
         
-        function escucharCambiosVias() { /* ...código sin cambios... */ }
-
-        // --- RELLENO DE CÓDIGO (NO MODIFICAR, ES PARA EVITAR REDUNDANCIA) ---
-        (function() {
-            const fns = { mostrarModal, cargarNovedadesModal, crearItemNovedad, resolverNovedad, mostrarNotificacion, actualizarDashboard, renderizarControlesPaginacion, filtrarHistorial, handleLogin, checkUser, handleLogout, cerrarModal, manejarSubmitNovedad, escucharCambiosVias };
-            for(const name in fns) { if(!window[name]) window[name] = fns[name]; }
-        })();
-
+        function escucharCambiosVias() {
+            if (canalVias) return;
+            canalVias = supabase.channel('cambios-db-vias')
+                .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+                    if (payload.table === 'vias' || payload.table === 'novedades') {
+                        cargarVias();
+                        if(modal.style.display === 'block' && viaActualModal) {
+                           cargarNovedadesModal();
+                        }
+                    }
+                })
+                .subscribe();
+        }
 
         // --- MANEJO DE EVENTOS ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -254,8 +462,6 @@
             closeButton.addEventListener('click', cerrarModal);
             window.addEventListener('click', (event) => { if (event.target == modal) { cerrarModal(); } });
             formNovedad.addEventListener('submit', manejarSubmitNovedad);
-            
-            // Modificado para llamar a la nueva función de filtro
             searchBox.addEventListener('input', filtrarVias);
             
             filterButtons.forEach(button => {
@@ -263,11 +469,9 @@
                     filterButtons.forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
                     filtroActivo = button.id.replace('filter-', '');
-                    filtrarVias(); // Llama a la nueva función de filtro
+                    filtrarVias();
                 });
             });
-            
-            // ... (resto de listeners sin cambios)
             document.getElementById('tab-pendientes').addEventListener('click', (e) => {
                 document.getElementById('content-pendientes').classList.add('active');
                 document.getElementById('content-historial').classList.remove('active');
@@ -285,12 +489,16 @@
                 const itemLi = target.closest('li');
                 if (!itemLi) return;
                 const novedadId = itemLi.dataset.novedadId;
+
                 if (target.classList.contains('btn-resolver')) { await resolverNovedad(novedadId); } 
                 else if (target.classList.contains('btn-eliminar')) {
-                    if (confirm("¿Seguro?")) {
+                    if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) {
                         const { error } = await supabase.from('novedades').delete().eq('id', novedadId);
-                        if (error) mostrarNotificacion("Error", 'error');
-                        else { mostrarNotificacion("Eliminado."); await cargarNovedadesModal(); }
+                        if (error) mostrarNotificacion("Error al eliminar", 'error');
+                        else {
+                            mostrarNotificacion("Eliminado con éxito.");
+                            await cargarNovedadesModal();
+                        }
                     }
                 }
                 else if (target.classList.contains('btn-editar')) {
@@ -303,13 +511,17 @@
                     const nuevoTexto = itemLi.querySelector('.edit-textarea').value.trim();
                     if(nuevoTexto){
                         const { error } = await supabase.from('novedades').update({ descripcion: nuevoTexto }).eq('id', novedadId);
-                        if(error) mostrarNotificacion('Error', 'error'); else mostrarNotificacion('Actualizado.');
+                        if(error) mostrarNotificacion('Error al guardar la edición.', 'error');
+                        else mostrarNotificacion('Tarea actualizada.');
                         await cargarNovedadesModal();
                     }
                 }
-                else if (target.classList.contains('btn-cancelar-edicion')) { await cargarNovedadesModal(); }
+                else if (target.classList.contains('btn-cancelar-edicion')) {
+                    await cargarNovedadesModal();
+                }
             });
         });
     </script>
 </body>
 </html>
+
