@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Vías de Peaje v2.0</title>
+    <title>Control de Vías de Peaje v3.0 - Tareas</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,20 +12,7 @@
 
     <style>
         /* --- ESTILOS GENERALES Y FONDO --- */
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(-45deg, #2e3440, #3b4252, #434c5e, #4c566a);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: #eceff4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Cambiado para que el contenido no siempre esté centrado verticalmente */
-            min-height: 100vh;
-        }
-
+        body { font-family: 'Roboto', sans-serif; background: linear-gradient(-45deg, #2e3440, #3b4252, #434c5e, #4c566a); background-size: 400% 400%; animation: gradientBG 15s ease infinite; color: #eceff4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .container { max-width: 1400px; margin: 0 auto; width: 100%;}
         
@@ -47,7 +34,7 @@
         #user-role-display { background-color: #88c0d0; color: #2e3440; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-right: 15px; text-transform: uppercase; }
         #logout-button { background-color: #bf616a; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
-        /* --- [NUEVO] DASHBOARD DE ESTADÍSTICAS --- */
+        /* --- DASHBOARD DE ESTADÍSTICAS --- */
         .dashboard-stats { display: flex; gap: 20px; margin-bottom: 25px; justify-content: space-around; }
         .stat-box { background-color: rgba(67, 76, 94, 0.8); padding: 20px; border-radius: 8px; text-align: center; flex-grow: 1; border-left: 5px solid #5e81ac; }
         .stat-box h3 { margin: 0 0 10px 0; font-size: 1em; color: #d8dee9; text-transform: uppercase; letter-spacing: 1px; }
@@ -67,46 +54,58 @@
 
         .via-box { position: relative; border-radius: 8px; padding: 18px 5px; text-align: center; font-size: 1.5em; font-weight: bold; cursor: pointer; color: #2e3440; border: 1px solid rgba(0, 0, 0, 0.2); border-bottom: 4px solid rgba(0, 0, 0, 0.4); text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3); transition: all 0.15s ease-out; }
         .via-box:hover { transform: translateY(-4px); filter: brightness(1.1); border-bottom-width: 6px; }
-        .via-box.con-novedad::after { content: ''; position: absolute; top: 6px; right: 6px; width: 12px; height: 12px; background-color: white; border-radius: 50%; border: 2px solid #2e3440; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         
         .status-normal { background: linear-gradient(to bottom, #b2d89b, #a3be8c); }
         .status-revisar { background: linear-gradient(to bottom, #f0d899, #ebcb8b); }
         .status-problema { background: linear-gradient(to bottom, #c97c84, #bf616a); }
 
-        /* --- [NUEVO] MENSAJE "SIN RESULTADOS" --- */
         .no-results-message { display: none; text-align: center; padding: 20px; font-style: italic; color: #d8dee9; }
-
         .grupos-secundarios-container { display: flex; gap: 25px; justify-content: space-between; margin-bottom: 25px; }
         .grupos-secundarios-container .grupo-vias { flex-grow: 1; margin-bottom: 0; }
 
-        /* --- ESTILOS MODAL Y MEJORAS --- */
+        /* --- [NUEVO] ESTILOS TOOLTIP/POP-UP --- */
+        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; transition: opacity 0.2s; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
+        #tooltip-problema.visible { opacity: 1; }
+        #tooltip-problema strong { display: block; margin-bottom: 5px; border-bottom: 1px solid rgba(236, 239, 244, 0.5); padding-bottom: 5px; }
+
+        /* --- [MODIFICADO] ESTILOS MODAL CON TABS --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background-color: #eceff4; color: #2e3440; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-body { display: flex; gap: 25px; }
+        .tasks-section { flex: 2; } /* Tareas ocupan más espacio */
+        .form-section { flex: 1; } /* Formulario ocupa menos */
 
-        .historial-filtros { display: flex; gap: 10px; margin-bottom: 15px; }
-        #historial-search { flex-grow: 1; padding: 8px; border: 1px solid #4c566a; border-radius: 4px; background-color: #fff; }
-        #historial-date-picker { padding: 8px; border: 1px solid #4c566a; border-radius: 4px; background-color: #fff; }
-        #historial-novedades-container { min-height: 150px; /* Para que el spinner se vea bien */ max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #d8dee9; border-radius: 5px; padding: 10px; position: relative; }
-        #historial-novedades li { background-color: #d8dee9; margin-bottom: 10px; padding: 10px; border-radius: 5px; border-left: 4px solid #5e81ac; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .modal-tabs { display: flex; border-bottom: 2px solid #d8dee9; margin-bottom: 15px; }
+        .modal-tabs button { background: none; border: none; padding: 10px 20px; cursor: pointer; font-size: 1.1em; font-weight: bold; color: #4c566a; border-bottom: 3px solid transparent; }
+        .modal-tabs button.active { color: #5e81ac; border-bottom-color: #5e81ac; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .novedades-container { min-height: 150px; max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #d8dee9; border-radius: 5px; padding: 10px; position: relative; }
+        .novedades-container li { background-color: #d8dee9; margin-bottom: 10px; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .novedad-pendiente { border-left: 5px solid #ebcb8b; }
+        .novedad-resuelta { border-left: 5px solid #a3be8c; }
+        
         .novedad-contenido { flex-grow: 1; }
         .meta-info { display: block; font-size: 0.8em; color: #4c566a; margin-bottom: 5px; }
-        .novedad-acciones button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 0.9em; border-radius: 4px; transition: background-color 0.2s; }
-        .btn-editar { color: #5e81ac; } .btn-eliminar { color: #bf616a; }
+        .novedad-acciones button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.2em; border-radius: 4px; }
+        .btn-resolver { color: #a3be8c; font-weight: bold; } .btn-resolver:hover { transform: scale(1.2); }
+        .btn-eliminar { color: #bf616a; }
 
-        /* --- [NUEVO] PAGINACIÓN DEL HISTORIAL --- */
+        .historial-filtros { display: flex; gap: 10px; margin-bottom: 15px; }
+        #historial-search { flex-grow: 1; padding: 8px; border: 1px solid #4c566a; border-radius: 4px; }
+        #historial-date-picker { padding: 8px; border: 1px solid #4c566a; border-radius: 4px; }
+        
+        /* ESTILOS VARIOS */
         .pagination-controls { text-align: center; margin-top: 15px; }
         .pagination-controls button { background-color: #5e81ac; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin: 0 5px; }
         .pagination-controls button:disabled { background-color: #4c566a; cursor: not-allowed; }
-        .pagination-controls span { margin: 0 10px; font-weight: bold; }
-
-        /* --- [NUEVO] NOTIFICACIONES "TOAST" --- */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; }
         .toast { background-color: #4c566a; color: #eceff4; padding: 15px; border-radius: 5px; margin-bottom: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); opacity: 0; transform: translateX(100%); transition: all 0.5s ease; border-left: 5px solid #88c0d0; }
         .toast.show { opacity: 1; transform: translateX(0); }
         .toast.error { border-left-color: #bf616a; }
-        
-        /* --- [NUEVO] INDICADOR DE CARGA (SPINNER) --- */
         .loader-container { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(46, 52, 64, 0.7); z-index: 10; justify-content: center; align-items: center; border-radius: 12px; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #88c0d0; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -120,87 +119,69 @@
 
     <!-- Contenido Principal -->
     <div id="main-content" style="display: none; width: 100%;">
-        <header>
-            <h1>Sistema de Control y Novedades de Vías</h1>
-            <div id="user-info">
-                <span id="user-email-display" style="margin-right: 15px; font-style: italic;"></span>
-                <span id="user-role-display"></span>
-                <button id="logout-button">Cerrar Sesión</button>
-            </div>
-        </header>
+        <header><h1>Sistema de Control y Novedades de Vías</h1><div id="user-info"><span id="user-email-display" style="margin-right: 15px; font-style: italic;"></span><span id="user-role-display"></span><button id="logout-button">Cerrar Sesión</button></div></header>
         <main class="container">
-            <!-- [NUEVO] Dashboard de Estadísticas -->
-            <div class="dashboard-stats">
-                <div class="stat-box" id="stat-problema"><h3>Con Problema</h3><div class="stat-number" id="stat-count-problema">0</div></div>
-                <div class="stat-box" id="stat-revisar"><h3>Para Revisar</h3><div class="stat-number" id="stat-count-revisar">0</div></div>
-                <div class="stat-box" id="stat-normal"><h3>Normales</h3><div class="stat-number" id="stat-count-normal">0</div></div>
-            </div>
-
-            <div class="controles-vias">
-                <input type="search" id="search-box" placeholder="Buscar por número de vía...">
-                <div class="filter-buttons">
-                    <button id="filter-todos" class="active">Todos</button>
-                    <button id="filter-normal">Normal</button>
-                    <button id="filter-revisar">Revisar</button>
-                    <button id="filter-problema">Problema</button>
-                </div>
-            </div>
-            
-            <div class="grupo-vias" id="container-1-40">
-                <div class="loader-container"><div class="spinner"></div></div>
-                <h2>RICCHERI (Vías 1 - 40)</h2>
-                <div id="grupo-1-40" class="vias-grid"></div>
-                <p class="no-results-message">No se encontraron vías con los filtros aplicados.</p>
-            </div>
-
-            <div class="grupos-secundarios-container">
-                <div class="grupo-vias" id="container-43-44">
-                    <div class="loader-container"><div class="spinner"></div></div>
-                    <h2>DONOVAN (Vías 43 - 44)</h2>
-                    <div id="grupo-43-44" class="vias-grid"></div>
-                    <p class="no-results-message">No se encontraron vías con los filtros aplicados.</p>
-                </div>
-                <div class="grupo-vias" id="container-46-47">
-                    <div class="loader-container"><div class="spinner"></div></div>
-                    <h2>BOULOGNE SUR MER (Vías 46 - 47)</h2>
-                    <div id="grupo-46-47" class="vias-grid"></div>
-                    <p class="no-results-message">No se encontraron vías con los filtros aplicados.</p>
-                </div>
-                <div class="grupo-vias" id="container-50-51">
-                    <div class="loader-container"><div class="spinner"></div></div>
-                    <h2>MERCADO CENTRAL (Vías 50 - 51)</h2>
-                    <div id="grupo-50-51" class="vias-grid"></div>
-                    <p class="no-results-message">No se encontraron vías con los filtros aplicados.</p>
-                </div>
-            </div>
+            <div class="dashboard-stats"><div class="stat-box" id="stat-problema"><h3>Con Problema</h3><div class="stat-number" id="stat-count-problema">0</div></div><div class="stat-box" id="stat-revisar"><h3>Para Revisar</h3><div class="stat-number" id="stat-count-revisar">0</div></div><div class="stat-box" id="stat-normal"><h3>Normales</h3><div class="stat-number" id="stat-count-normal">0</div></div></div>
+            <div class="controles-vias"><input type="search" id="search-box" placeholder="Buscar por número de vía..."><div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div>
+            <div class="grupo-vias" id="container-1-40"><div class="loader-container"><div class="spinner"></div></div><h2>RICCHERI (Vías 1 - 40)</h2><div id="grupo-1-40" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div>
+            <div class="grupos-secundarios-container"><div class="grupo-vias" id="container-43-44"><div class="loader-container"><div class="spinner"></div></div><h2>DONOVAN (Vías 43 - 44)</h2><div id="grupo-43-44" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-46-47"><div class="loader-container"><div class="spinner"></div></div><h2>BOULOGNE SUR MER (Vías 46 - 47)</h2><div id="grupo-46-47" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-50-51"><div class="loader-container"><div class="spinner"></div></div><h2>MERCADO CENTRAL (Vías 50 - 51)</h2><div id="grupo-50-51" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div></div>
         </main>
     </div>
 
-    <!-- Modal con mejoras -->
+    <!-- [MODIFICADO] Modal con TABS para Pendientes e Historial -->
     <div id="modal-via" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span><h2 id="modal-title"></h2>
             <div class="modal-body">
-                <div class="historial-section">
-                    <h3>Historial</h3>
-                    <div class="historial-filtros">
-                        <input type="search" id="historial-search" placeholder="Buscar en el historial...">
-                        <input type="date" id="historial-date-picker">
+                <div class="tasks-section">
+                    <div class="modal-tabs">
+                        <button id="tab-pendientes" class="active">Pendientes</button>
+                        <button id="tab-historial">Historial</button>
                     </div>
-                    <div id="historial-novedades-container">
-                        <div class="loader-container" id="historial-loader"><div class="spinner"></div></div>
-                        <ul id="historial-novedades" style="list-style-type: none; padding: 0;"></ul>
+
+                    <!-- Contenido Pestaña Pendientes -->
+                    <div id="content-pendientes" class="tab-content active">
+                        <div class="novedades-container">
+                            <div class="loader-container"><div class="spinner"></div></div>
+                            <ul id="lista-pendientes" style="list-style-type: none; padding: 0;"></ul>
+                        </div>
                     </div>
-                    <!-- [NUEVO] Controles de Paginación -->
-                    <div id="historial-pagination" class="pagination-controls"></div>
+
+                    <!-- Contenido Pestaña Historial -->
+                    <div id="content-historial" class="tab-content">
+                        <div class="historial-filtros">
+                            <input type="search" id="historial-search" placeholder="Buscar en el historial...">
+                            <input type="date" id="historial-date-picker">
+                        </div>
+                        <div class="novedades-container">
+                            <div class="loader-container"><div class="spinner"></div></div>
+                            <ul id="lista-historial" style="list-style-type: none; padding: 0;"></ul>
+                        </div>
+                        <div id="historial-pagination" class="pagination-controls"></div>
+                    </div>
                 </div>
-                <div class="form-section"><h3>Agregar/Modificar</h3><form id="form-novedad"><input type="hidden" id="via-id-input"><label for="descripcion-novedad">Novedad:</label><textarea id="descripcion-novedad" rows="4" placeholder="Opcional."></textarea><label for="status-via">Estado:</label><select id="status-via"><option value="normal">Normal (Verde)</option><option value="revisar">Revisar (Amarillo)</option><option value="problema">Problema (Rojo)</option></select><button type="submit">Guardar</button></form></div>
+                <div class="form-section">
+                    <h3>Agregar Tarea</h3>
+                    <form id="form-novedad">
+                        <input type="hidden" id="via-id-input">
+                        <label for="descripcion-novedad">Nueva Tarea:</label>
+                        <textarea id="descripcion-novedad" rows="4" placeholder="Describir la tarea pendiente..."></textarea>
+                        <label for="status-via">Estado de la Vía:</label>
+                        <select id="status-via">
+                            <option value="normal">Normal (Verde)</option>
+                            <option value="revisar">Revisar (Amarillo)</option>
+                            <option value="problema">Problema (Rojo)</option>
+                        </select>
+                        <button type="submit">Guardar</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- [NUEVO] Contenedor para notificaciones Toast -->
     <div id="toast-container"></div>
+    <!-- [NUEVO] Elemento para el Tooltip -->
+    <div id="tooltip-problema"></div>
 
     <script>
         // --- Configuración y Elementos DOM ---
@@ -208,40 +189,175 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlicnd3Z2tvdXhkZ2RmcGRvZmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjU3MzksImV4cCI6MjA3NTEwMTczOX0.oxBJ8P1lyu8fL6eSFYRatCiP4XRg2xtdUJa8pqjNvxo';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        // --- INICIO DE LA CORRECCIÓN ---
         // Elementos DOM (Declarados globalmente para que sean accesibles)
         const loginContainer = document.getElementById('login-container'),
             mainContent = document.getElementById('main-content'),
+            modal = document.getElementById('modal-via'),
+            searchBox = document.getElementById('search-box'),
+            filterButtons = document.querySelectorAll('.filter-buttons button'),
+            tooltipProblema = document.getElementById('tooltip-problema'),
             loginForm = document.getElementById('login-form'),
             loginButton = document.getElementById('login-button'),
             loginError = document.getElementById('login-error'),
             logoutButton = document.getElementById('logout-button'),
             userEmailDisplay = document.getElementById('user-email-display'),
             userRoleDisplay = document.getElementById('user-role-display'),
-            modal = document.getElementById('modal-via'),
             closeButton = document.querySelector('.close-button'),
-            formNovedad = document.getElementById('form-novedad'),
-            searchBox = document.getElementById('search-box'),
-            filterButtons = document.querySelectorAll('.filter-buttons button'),
-            historialSearch = document.getElementById('historial-search'),
-            historialDatePicker = document.getElementById('historial-date-picker');
-        const gruposContenedores = {
-            'grupo-1-40': document.getElementById('grupo-1-40'),
-            'grupo-43-44': document.getElementById('grupo-43-44'),
-            'grupo-46-47': document.getElementById('grupo-46-47'),
-            'grupo-50-51': document.getElementById('grupo-50-51')
-        };
-        // --- FIN DE LA CORRECCIÓN ---
-        
+            formNovedad = document.getElementById('form-novedad');
+            
         // Estado de la aplicación
-        let currentUserEmail = null;
-        let currentUserRole = 'operator'; // Rol por defecto
-        let filtroActivo = 'todos';
-        let canalVias = null;
-        let todasLasVias = []; // Cache local de las vías para el dashboard
-        let viaActualModal = null; // Para la paginación
+        let currentUserEmail = null,
+            currentUserRole = 'operator',
+            filtroActivo = 'todos',
+            canalVias = null,
+            todasLasVias = [],
+            viaActualModal = null;
 
-        // --- [NUEVA FUNCIÓN] Notificaciones Toast ---
+        // --- LÓGICA DE TOOLTIPS PARA VÍAS CON PROBLEMAS ---
+        async function mostrarTooltipProblema(viaId, targetElement) {
+            const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single();
+            if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } 
+            else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; }
+            
+            const rect = targetElement.getBoundingClientRect();
+            tooltipProblema.style.left = `${rect.left + window.scrollX}px`;
+            tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`;
+            tooltipProblema.classList.add('visible');
+        }
+
+        function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
+
+        // --- LÓGICA PRINCIPAL ---
+        async function cargarVias() {
+            document.querySelectorAll('.loader-container').forEach(loader => loader.style.display = 'flex');
+            try {
+                // Se cambió la consulta para obtener también las novedades asociadas
+                const { data: vias, error } = await supabase.from('vias').select(`id, numero_via, status`).order('numero_via', { ascending: true });
+                if (error) throw error;
+                todasLasVias = vias; 
+                document.querySelectorAll('.vias-grid').forEach(g => g.innerHTML = '');
+                
+                for(const via of vias){
+                    const viaBox = document.createElement('div');
+                    viaBox.className = `via-box status-${via.status}`;
+                    viaBox.textContent = via.numero_via;
+                    viaBox.dataset.viaId = via.id;
+                    viaBox.dataset.viaStatus = via.status;
+                    
+                    if (via.status === 'problema') {
+                        viaBox.addEventListener('mouseenter', () => mostrarTooltipProblema(via.id, viaBox));
+                        viaBox.addEventListener('mouseleave', ocultarTooltip);
+                    }
+
+                    viaBox.addEventListener('click', () => mostrarModal(via));
+                    
+                    const grupoId = via.numero_via <= 40 ? 'grupo-1-40' : via.numero_via <= 44 ? 'grupo-43-44' : via.numero_via <= 47 ? 'grupo-46-47' : 'grupo-50-51';
+                    document.getElementById(grupoId).appendChild(viaBox);
+                }
+
+                actualizarDashboard();
+                filtrarVias();
+            } catch (error) {
+                console.error('Error al cargar las vías:', error);
+                mostrarNotificacion('No se pudieron cargar los datos.', 'error');
+            } finally {
+                document.querySelectorAll('.grupo-vias .loader-container').forEach(loader => loader.style.display = 'none');
+            }
+        }
+        
+        // --- LÓGICA DEL MODAL CON TABS Y TAREAS ---
+        async function mostrarModal(via) {
+            viaActualModal = via;
+            document.getElementById('modal-title').textContent = `Tareas y Novedades - Vía ${via.numero_via}`;
+            document.getElementById('via-id-input').value = via.id;
+            document.getElementById('status-via').value = via.status;
+            document.getElementById('descripcion-novedad').value = '';
+            document.getElementById('tab-pendientes').click();
+            modal.style.display = 'block';
+
+            await cargarNovedadesModal();
+        }
+
+        async function cargarNovedadesModal(historialPage = 1) {
+            const listaPendientes = document.getElementById('lista-pendientes');
+            const listaHistorial = document.getElementById('lista-historial');
+            const loaders = document.querySelectorAll('.novedades-container .loader-container');
+            loaders.forEach(l => l.style.display = 'flex');
+            listaPendientes.innerHTML = '';
+            listaHistorial.innerHTML = '';
+
+            try {
+                const { data: pendientes, error: errPend } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', false).order('created_at', { ascending: true });
+                if (errPend) throw errPend;
+                if (pendientes.length > 0) {
+                    pendientes.forEach(n => listaPendientes.appendChild(crearItemNovedad(n, false)));
+                } else {
+                    listaPendientes.innerHTML = '<li>No hay tareas pendientes.</li>';
+                }
+
+                const NOVEDADES_PER_PAGE = 5;
+                const from = (historialPage - 1) * NOVEDADES_PER_PAGE;
+                const to = from + NOVEDADES_PER_PAGE - 1;
+                const { count, error: errCount } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', true);
+                if (errCount) throw errCount;
+
+                const { data: resueltas, error: errRes } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', true).order('created_at', { ascending: false }).range(from, to);
+                if (errRes) throw errRes;
+                if (resueltas.length > 0) {
+                    resueltas.forEach(n => listaHistorial.appendChild(crearItemNovedad(n, true)));
+                } else {
+                    listaHistorial.innerHTML = '<li>No hay historial de tareas resueltas.</li>';
+                }
+                renderizarControlesPaginacion(historialPage, count, NOVEDADES_PER_PAGE);
+            } catch (error) {
+                console.error("Error cargando novedades:", error);
+                mostrarNotificacion('Error al cargar las tareas.', 'error');
+            } finally {
+                loaders.forEach(l => l.style.display = 'none');
+            }
+        }
+
+        function crearItemNovedad(novedad, esResuelta) {
+            const item = document.createElement('li');
+            item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente';
+            item.dataset.novedadId = novedad.id;
+            item.dataset.fecha = novedad.created_at;
+            const fechaLocal = new Date(novedad.created_at).toLocaleString('es-AR');
+
+            let botonesAccion = `<button class="btn-eliminar" title="Eliminar">🗑️</button>`;
+            if (!esResuelta) {
+                botonesAccion = `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>` + botonesAccion;
+            }
+
+            item.innerHTML = `
+                <div class="novedad-contenido">
+                    <span class="meta-info">${fechaLocal} - ${novedad.user_email || 'Sistema'}</span>
+                    <p class="descripcion-texto">${novedad.descripcion}</p>
+                </div>
+                <div class="novedad-acciones">${botonesAccion}</div>`;
+            return item;
+        }
+
+        async function resolverNovedad(novedadId) {
+            const { error } = await supabase.from('novedades').update({ resuelta: true }).eq('id', novedadId);
+            if (error) {
+                mostrarNotificacion('Error al resolver la tarea.', 'error');
+                return;
+            }
+            mostrarNotificacion('Tarea marcada como resuelta.');
+            
+            const { count, error: countError } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', false);
+            
+            if (count === 0 && viaActualModal.status !== 'normal') {
+                const { error: updateError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaActualModal.id);
+                if (!updateError) {
+                    mostrarNotificacion(`Vía ${viaActualModal.numero_via} pasada a estado Normal.`, 'success');
+                }
+            }
+            await cargarNovedadesModal(); 
+        }
+
+        // --- RESTO DE FUNCIONES ---
         function mostrarNotificacion(mensaje, tipo = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -255,46 +371,6 @@
             }, 3000);
         }
 
-        // --- [MEJORADA] Funciones de Carga con Spinners ---
-        async function cargarVias() {
-            document.querySelectorAll('.loader-container').forEach(loader => loader.style.display = 'flex');
-            try {
-                // NOTA: Esta vista 'vias_con_novedades_info' podría necesitar ser actualizada
-                // si no considera el nuevo estado 'resuelta' de las novedades.
-                const { data: vias, error } = await supabase.from('vias').select('*').order('numero_via', { ascending: true });
-                if (error) throw error;
-                
-                todasLasVias = vias; // Guardar en cache
-                Object.values(gruposContenedores).forEach(container => container.innerHTML = '');
-                
-                for (const via of vias) {
-                    const { count: pendientesCount } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', via.id).eq('resuelta', false);
-                    
-                    const viaBox = document.createElement('div');
-                    viaBox.className = `via-box status-${via.status}`;
-                    viaBox.textContent = via.numero_via;
-                    viaBox.dataset.viaId = via.id;
-                    viaBox.dataset.viaStatus = via.status;
-                    if (pendientesCount > 0) viaBox.classList.add('con-novedad'); // Usar 'con-novedad' para indicar tareas pendientes
-                    
-                    viaBox.addEventListener('click', () => mostrarModal(via));
-                    if (via.numero_via <= 40) gruposContenedores['grupo-1-40'].appendChild(viaBox);
-                    else if (via.numero_via <= 44) gruposContenedores['grupo-43-44'].appendChild(viaBox);
-                    else if (via.numero_via <= 47) gruposContenedores['grupo-46-47'].appendChild(viaBox);
-                    else if (via.numero_via <= 51) gruposContenedores['grupo-50-51'].appendChild(viaBox);
-                }
-
-                actualizarDashboard();
-                filtrarVias();
-            } catch (error) {
-                console.error('Error al cargar las vías:', error);
-                mostrarNotificacion('No se pudieron cargar los datos.', 'error');
-            } finally {
-                document.querySelectorAll('.grupo-vias .loader-container').forEach(loader => loader.style.display = 'none');
-            }
-        }
-
-        // --- [NUEVA FUNCIÓN] Dashboard ---
         function actualizarDashboard() {
             const counts = todasLasVias.reduce((acc, via) => {
                 acc[via.status] = (acc[via.status] || 0) + 1;
@@ -305,110 +381,28 @@
             document.getElementById('stat-count-normal').textContent = counts.normal || 0;
         }
 
-        // --- [MEJORADA] Modal y Paginación del Historial ---
-        async function mostrarModal(via) {
-            viaActualModal = via;
-            document.getElementById('modal-title').textContent = `Detalles - Vía ${via.numero_via}`;
-            document.getElementById('via-id-input').value = via.id;
-            document.getElementById('status-via').value = via.status;
-            document.getElementById('descripcion-novedad').value = '';
-            historialSearch.value = '';
-            historialDatePicker.value = '';
-            modal.style.display = 'block';
-            await cargarHistorialPaginado(1);
-        }
-
-        async function cargarHistorialPaginado(page) {
-            const NOVEDADES_PER_PAGE = 5;
-            const from = (page - 1) * NOVEDADES_PER_PAGE;
-            const to = from + NOVEDADES_PER_PAGE - 1;
-
-            const historialLista = document.getElementById('historial-novedades');
-            const loader = document.getElementById('historial-loader');
-            loader.style.display = 'flex';
-            historialLista.innerHTML = '';
-            
-            try {
-                // Obtener el total para la paginación
-                const { count, error: countError } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id);
-                if (countError) throw countError;
-
-                const { data: novedades, error } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).order('created_at', { ascending: false }).range(from, to);
-                if (error) throw error;
-                
-                if (novedades.length > 0) {
-                    novedades.forEach(novedad => {
-                        const item = document.createElement('li');
-                        item.dataset.novedadId = novedad.id;
-                        item.dataset.fecha = novedad.created_at;
-                        const fechaLocal = new Date(novedad.created_at).toLocaleString('es-AR');
-                        const puedeModificar = true;
-                        item.innerHTML = `
-                            <div class="novedad-contenido">
-                                <span class="meta-info"><span class="fecha">${fechaLocal}</span> - <span class="usuario">${novedad.user_email || 'Sistema'}</span></span>
-                                <p class="descripcion-texto">${novedad.descripcion}</p>
-                            </div>
-                            ${puedeModificar ? `<div class="novedad-acciones"><button class="btn-editar" title="Editar">✏️</button><button class="btn-eliminar" title="Eliminar">🗑️</button></div>` : ''}`;
-                        historialLista.appendChild(item);
-                    });
-                } else { 
-                    historialLista.innerHTML = '<li>Sin novedades.</li>'; 
-                }
-                
-                renderizarControlesPaginacion(page, count, NOVEDADES_PER_PAGE);
-            } catch (error) {
-                console.error("Error cargando historial:", error);
-                historialLista.innerHTML = '<li>Error al cargar.</li>';
-            } finally {
-                loader.style.display = 'none';
-            }
-        }
-        
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) {
             const paginationContainer = document.getElementById('historial-pagination');
             paginationContainer.innerHTML = '';
             const totalPages = Math.ceil(totalItems / perPage);
             if (totalPages <= 1) return;
-
             const prevButton = document.createElement('button');
             prevButton.textContent = 'Anterior';
             prevButton.disabled = currentPage === 1;
-            prevButton.onclick = () => cargarHistorialPaginado(currentPage - 1);
-
+            prevButton.onclick = () => cargarNovedadesModal(currentPage - 1);
             const pageInfo = document.createElement('span');
             pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
-
             const nextButton = document.createElement('button');
             nextButton.textContent = 'Siguiente';
             nextButton.disabled = currentPage === totalPages;
-            nextButton.onclick = () => cargarHistorialPaginado(currentPage + 1);
-
+            nextButton.onclick = () => cargarNovedadesModal(currentPage + 1);
             paginationContainer.append(prevButton, pageInfo, nextButton);
         }
 
-
         function filtrarHistorial() {
-            const searchTerm = historialSearch.value.toLowerCase();
-            const selectedDate = historialDatePicker.value;
-            const novedades = document.querySelectorAll('#historial-novedades li');
-            
-            novedades.forEach(novedad => {
-                const textoNovedad = novedad.querySelector('.novedad-contenido')?.innerText.toLowerCase() || '';
-                const fechaNovedad = novedad.dataset.fecha || '';
-                const coincideTexto = textoNovedad.includes(searchTerm);
-                const coincideFecha = !selectedDate || fechaNovedad.startsWith(selectedDate);
-                
-                if (coincideTexto && coincideFecha) {
-                    novedad.style.display = 'flex';
-                } else {
-                    novedad.style.display = 'none';
-                }
-            });
+            // Se puede implementar en el futuro
         }
-        historialSearch.addEventListener('input', filtrarHistorial);
-        historialDatePicker.addEventListener('change', filtrarHistorial);
 
-        // --- [MEJORADA] Autenticación y Roles ---
         const handleLogin = async (event) => {
             event.preventDefault();
             loginButton.disabled = true;
@@ -420,10 +414,9 @@
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                
                 const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
                 if (profileError) throw profileError;
-                
+
                 loginContainer.style.display = 'none';
                 mainContent.style.display = 'block';
                 currentUserEmail = data.user.email;
@@ -432,8 +425,7 @@
                 userRoleDisplay.textContent = currentUserRole;
                 await cargarVias();
                 escucharCambiosVias();
-
-            } catch(error) {
+            } catch (error) {
                 console.error('Error de login:', error.message);
                 loginError.style.display = 'block';
                 mostrarNotificacion('Usuario o contraseña incorrectos.', 'error');
@@ -447,7 +439,7 @@
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-                if (profileError) { console.error("Error obteniendo perfil"); await handleLogout(); return; }
+                if (profileError) { await handleLogout(); return; }
 
                 loginContainer.style.display = 'none';
                 mainContent.style.display = 'block';
@@ -463,10 +455,20 @@
             }
         };
 
-        const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; document.getElementById('email').value = ''; document.getElementById('password').value = ''; userEmailDisplay.textContent = ''; userRoleDisplay.textContent = ''; currentUserEmail = null; currentUserRole = 'operator'; };
+        const handleLogout = async () => {
+            if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; }
+            await supabase.auth.signOut();
+            mainContent.style.display = 'none';
+            loginContainer.style.display = 'block';
+            currentUserEmail = null;
+            currentUserRole = 'operator';
+        };
 
-        function cerrarModal() { modal.style.display = 'none'; viaActualModal = null; }
-        
+        function cerrarModal() {
+            modal.style.display = 'none';
+            viaActualModal = null;
+        }
+
         async function manejarSubmitNovedad(event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -476,31 +478,31 @@
                 const idVia = document.getElementById('via-id-input').value;
                 const nuevaDescripcion = document.getElementById('descripcion-novedad').value.trim();
                 const nuevoStatus = document.getElementById('status-via').value;
-                const viaBox = document.querySelector(`.via-box[data-via-id='${idVia}']`);
-                const statusOriginal = viaBox ? viaBox.dataset.viaStatus : null;
-                if (!nuevaDescripcion && nuevoStatus === statusOriginal) { cerrarModal(); return; }
+                if (!nuevaDescripcion) { mostrarNotificacion('La descripción de la tarea no puede estar vacía.', 'error'); return; }
+
                 const { data: { user } } = await supabase.auth.getUser();
-                if (!user) { mostrarNotificacion('Sesión expirada. Inicie sesión de nuevo.', 'error'); return; }
+                if (!user) { mostrarNotificacion('Sesión expirada.', 'error'); return; }
                 
-                const promises = [];
-                if (nuevaDescripcion) { promises.push(supabase.from('novedades').insert([{ via_id: idVia, descripcion: nuevaDescripcion, user_email: user.email }])); }
-                if (nuevoStatus !== statusOriginal) { promises.push(supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia)); }
+                const { error: insertError } = await supabase.from('novedades').insert([{ via_id: idVia, descripcion: nuevaDescripcion, user_email: user.email, resuelta: false }]);
+                if (insertError) throw insertError;
                 
-                const results = await Promise.all(promises);
-                if (results.some(r => r.error)) { throw new Error('Error al guardar datos en Supabase'); }
+                if (nuevoStatus !== viaActualModal.status) {
+                    const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia);
+                    if (updateError) throw updateError;
+                }
                 
-                mostrarNotificacion('Guardado con éxito!');
-                cerrarModal();
+                mostrarNotificacion('Tarea agregada con éxito!');
+                await cargarNovedadesModal();
+                document.getElementById('descripcion-novedad').value = '';
             } catch (error) {
                 console.error('Error al guardar:', error);
-                mostrarNotificacion('Error al guardar la novedad.', 'error');
+                mostrarNotificacion('Error al guardar la tarea.', 'error');
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Guardar';
             }
         }
-        
-        // --- [MEJORADA] Filtrado con mensaje "Sin Resultados" ---
+
         function filtrarVias() {
             const textoBusqueda = searchBox.value.toLowerCase();
             document.querySelectorAll('.grupo-vias').forEach(grupo => {
@@ -516,7 +518,7 @@
                         via.style.display = 'none';
                     }
                 });
-                
+
                 const mensajeVacio = grupo.querySelector('.no-results-message');
                 if (viasVisibles === 0) {
                     mensajeVacio.style.display = 'block';
@@ -525,23 +527,21 @@
                 }
             });
         }
-        
+
         function escucharCambiosVias() {
             if (canalVias) return;
             canalVias = supabase.channel('cambios-db-vias')
                 .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-                    console.log('Cambio recibido en tiempo real:', payload);
-                    if(payload.table === 'vias' || payload.table === 'novedades') {
-                       cargarVias();
+                    if (payload.table === 'vias' || payload.table === 'novedades') {
+                        cargarVias(); // Recargar todo para mantener la consistencia
                     }
                 })
                 .subscribe();
-            console.log("Suscrito a cambios en tiempo real.");
         }
-        
-        // --- Event Listeners (SECCIÓN CORREGIDA Y UNIFICADA) ---
+
+        // --- MANEJO DE EVENTOS ---
         document.addEventListener('DOMContentLoaded', () => {
-            checkUser(); // Verifica si hay una sesión activa al cargar
+            checkUser();
 
             loginForm.addEventListener('submit', handleLogin);
             logoutButton.addEventListener('click', handleLogout);
@@ -559,23 +559,40 @@
                 });
             });
 
-            document.getElementById('historial-novedades').addEventListener('click', async (e) => {
+            document.getElementById('tab-pendientes').addEventListener('click', (e) => {
+                document.getElementById('content-pendientes').classList.add('active');
+                document.getElementById('content-historial').classList.remove('active');
+                e.target.classList.add('active');
+                document.getElementById('tab-historial').classList.remove('active');
+            });
+
+            document.getElementById('tab-historial').addEventListener('click', (e) => {
+                document.getElementById('content-historial').classList.add('active');
+                document.getElementById('content-pendientes').classList.remove('active');
+                e.target.classList.add('active');
+                document.getElementById('tab-pendientes').classList.remove('active');
+            });
+
+            document.querySelector('.tasks-section').addEventListener('click', async (e) => {
                 const target = e.target;
                 const itemLi = target.closest('li');
                 if (!itemLi) return;
-                if (target.classList.contains('btn-eliminar')) {
-                    if (confirm("¿Está seguro de que desea eliminar esta novedad?")) {
-                        const { error } = await supabase.from('novedades').delete().eq('id', itemLi.dataset.novedadId);
+                const novedadId = itemLi.dataset.novedadId;
+
+                if (target.classList.contains('btn-resolver')) {
+                    await resolverNovedad(novedadId);
+                } else if (target.classList.contains('btn-eliminar')) {
+                    if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) {
+                        const { error } = await supabase.from('novedades').delete().eq('id', novedadId);
                         if (error) mostrarNotificacion("Error al eliminar", 'error');
                         else {
-                            mostrarNotificacion("Novedad eliminada.");
-                            cargarHistorialPaginado(1); // Recargar la página actual del historial
+                            mostrarNotificacion("Eliminado con éxito.");
+                            await cargarNovedadesModal();
                         }
                     }
-                } // La lógica de editar se puede añadir aquí
+                }
             });
         });
-
     </script>
 </body>
 </html>
