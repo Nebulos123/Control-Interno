@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Vías de Peaje v3.1 - Editor</title>
+    <title>Control de Vías de Peaje v3.2 - Mejorado</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,50 +63,44 @@
         .grupos-secundarios-container { display: flex; gap: 25px; justify-content: space-between; margin-bottom: 25px; }
         .grupos-secundarios-container .grupo-vias { flex-grow: 1; margin-bottom: 0; }
 
-        /* --- [MODIFICADO] ESTILOS TOOLTIP/POP-UP --- */
-        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
-        #tooltip-problema.visible { opacity: 1; transition: opacity 0.2s; /* La transición solo se aplica al aparecer */ }
+        /* --- [CORREGIDO] ESTILOS TOOLTIP --- */
+        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; transition: opacity 0.2s ease-in-out; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
+        #tooltip-problema.visible { opacity: 1; }
         #tooltip-problema strong { display: block; margin-bottom: 5px; border-bottom: 1px solid rgba(236, 239, 244, 0.5); padding-bottom: 5px; }
 
-        /* --- [MODIFICADO] ESTILOS MODAL CON TABS Y EDITOR --- */
+        /* --- ESTILOS MODAL CON TABS Y EDITOR --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background-color: #eceff4; color: #2e3440; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .modal-body { display: flex; gap: 25px; }
         .tasks-section { flex: 2; }
         .form-section { flex: 1; }
-
         .modal-tabs { display: flex; border-bottom: 2px solid #d8dee9; margin-bottom: 15px; }
         .modal-tabs button { background: none; border: none; padding: 10px 20px; cursor: pointer; font-size: 1.1em; font-weight: bold; color: #4c566a; border-bottom: 3px solid transparent; }
         .modal-tabs button.active { color: #5e81ac; border-bottom-color: #5e81ac; }
-
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
         .novedades-container { min-height: 150px; max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #d8dee9; border-radius: 5px; padding: 10px; position: relative; }
         .novedades-container li { background-color: #d8dee9; margin-bottom: 10px; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .novedad-pendiente { border-left: 5px solid #ebcb8b; }
         .novedad-resuelta { border-left: 5px solid #a3be8c; }
-        
-        .novedad-contenido { flex-grow: 1; word-break: break-word; } /* Evita que el texto largo se desborde */
+        .novedad-contenido { flex-grow: 1; word-break: break-word; }
         .meta-info { display: block; font-size: 0.8em; color: #4c566a; margin-bottom: 5px; }
+        .meta-info.resuelta-info { color: #a3be8c; font-weight: bold; margin-top: 4px; } /* [NUEVO] Estilo para auditoría */
         .novedad-acciones button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.2em; border-radius: 4px; transition: transform 0.1s; }
         .novedad-acciones button:hover { transform: scale(1.2); }
         .btn-resolver { color: #a3be8c; font-weight: bold; }
         .btn-editar { color: #5e81ac; }
         .btn-eliminar { color: #bf616a; }
-
         .edit-container { display: flex; flex-direction: column; gap: 8px; width: 100%; }
         .edit-textarea { width: 100%; box-sizing: border-box; min-height: 60px; font-family: 'Roboto', sans-serif; font-size: 0.9em; padding: 5px; border-radius: 4px; border: 1px solid #5e81ac; }
         .edit-actions { display: flex; gap: 10px; justify-content: flex-end; }
         .edit-actions button { font-size: 0.8em; padding: 5px 10px; border-radius: 4px; color: white; cursor: pointer; border: none;}
         .btn-guardar-edicion { background-color: #a3be8c; }
         .btn-cancelar-edicion { background-color: #d08770; }
-
         .historial-filtros { display: flex; gap: 10px; margin-bottom: 15px; }
         #historial-search { flex-grow: 1; padding: 8px; border: 1px solid #4c566a; border-radius: 4px; }
         #historial-date-picker { padding: 8px; border: 1px solid #4c566a; border-radius: 4px; }
-        
         .pagination-controls { text-align: center; margin-top: 15px; }
         .pagination-controls button { background-color: #5e81ac; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin: 0 5px; }
         .pagination-controls button:disabled { background-color: #4c566a; cursor: not-allowed; }
@@ -117,11 +111,9 @@
         .loader-container { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(46, 52, 64, 0.7); z-index: 10; justify-content: center; align-items: center; border-radius: 12px; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #88c0d0; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
     </style>
 </head>
 <body>
-
     <div id="login-container"><h1>Iniciar Sesión</h1><form id="login-form"><div class="input-group"><label for="email">Usuario (Email)</label><input type="email" id="email" required></div><div class="input-group"><label for="password">Contraseña</label><input type="password" id="password" required></div><button type="submit" id="login-button">Acceder</button><p id="login-error">Usuario o contraseña incorrectos.</p></form></div>
     <div id="main-content" style="display: none; width: 100%;"><header><h1>Sistema de Control y Novedades de Vías</h1><div id="user-info"><span id="user-email-display" style="margin-right: 15px; font-style: italic;"></span><span id="user-role-display"></span><button id="logout-button">Cerrar Sesión</button></div></header><main class="container"><div class="dashboard-stats"><div class="stat-box" id="stat-problema"><h3>Con Problema</h3><div class="stat-number" id="stat-count-problema">0</div></div><div class="stat-box" id="stat-revisar"><h3>Para Revisar</h3><div class="stat-number" id="stat-count-revisar">0</div></div><div class="stat-box" id="stat-normal"><h3>Normales</h3><div class="stat-number" id="stat-count-normal">0</div></div></div><div class="controles-vias"><input type="search" id="search-box" placeholder="Buscar por número de vía..."><div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div><div class="grupo-vias" id="container-1-40"><div class="loader-container"><div class="spinner"></div></div><h2>RICCHERI (Vías 1 - 40)</h2><div id="grupo-1-40" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupos-secundarios-container"><div class="grupo-vias" id="container-43-44"><div class="loader-container"><div class="spinner"></div></div><h2>DONOVAN (Vías 43 - 44)</h2><div id="grupo-43-44" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-46-47"><div class="loader-container"><div class="spinner"></div></div><h2>BOULOGNE SUR MER (Vías 46 - 47)</h2><div id="grupo-46-47" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-50-51"><div class="loader-container"><div class="spinner"></div></div><h2>MERCADO CENTRAL (Vías 50 - 51)</h2><div id="grupo-50-51" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div></div></main></div>
     <div id="modal-via" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h2 id="modal-title"></h2><div class="modal-body"><div class="tasks-section"><div class="modal-tabs"><button id="tab-pendientes" class="active">Pendientes</button><button id="tab-historial">Historial</button></div><div id="content-pendientes" class="tab-content active"><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-pendientes" style="list-style-type: none; padding: 0;"></ul></div></div><div id="content-historial" class="tab-content"><div class="historial-filtros"><input type="search" id="historial-search" placeholder="Buscar en el historial..."><input type="date" id="historial-date-picker"></div><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-historial" style="list-style-type: none; padding: 0;"></ul></div><div id="historial-pagination" class="pagination-controls"></div></div></div><div class="form-section"><h3>Agregar Tarea</h3><form id="form-novedad"><input type="hidden" id="via-id-input"><label for="descripcion-novedad">Nueva Tarea:</label><textarea id="descripcion-novedad" rows="4" placeholder="Describir la tarea pendiente..."></textarea><label for="status-via">Estado de la Vía:</label><select id="status-via"><option value="normal">Normal (Verde)</option><option value="revisar">Revisar (Amarillo)</option><option value="problema">Problema (Rojo)</option></select><button type="submit">Guardar</button></form></div></div></div></div>
@@ -138,7 +130,10 @@
             
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
 
-        // --- LÓGICA DE TOOLTIPS ---
+        // [NUEVO] Helper para control de roles
+        const esAdmin = () => currentUserRole === 'admin';
+
+        // --- LÓGICA DE TOOLTIPS (CORREGIDA) ---
         async function mostrarTooltipProblema(viaId, targetElement) {
             const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single();
             if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } 
@@ -152,10 +147,6 @@
 
         function ocultarTooltip() {
             tooltipProblema.classList.remove('visible');
-            tooltipProblema.style.transition = 'none'; // Eliminar transición para desaparición instantánea
-            setTimeout(() => {
-                tooltipProblema.style.transition = ''; // Restaurar para la próxima vez
-            }, 0);
         }
 
         // --- LÓGICA PRINCIPAL ---
@@ -201,6 +192,11 @@
             document.getElementById('via-id-input').value = via.id;
             document.getElementById('status-via').value = via.status;
             document.getElementById('descripcion-novedad').value = '';
+            
+            // [MODIFICADO] Lógica de roles para el formulario
+            const statusSelect = document.getElementById('status-via');
+            statusSelect.disabled = !esAdmin(); // Solo los admins pueden cambiar el estado
+
             document.getElementById('tab-pendientes').click();
             modal.style.display = 'block';
             await cargarNovedadesModal();
@@ -215,6 +211,7 @@
             listaHistorial.innerHTML = '';
 
             try {
+                // Cargar pendientes (no cambia)
                 const { data: pendientes, error: errPend } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', false).order('created_at', { ascending: true });
                 if (errPend) throw errPend;
                 if (pendientes.length > 0) {
@@ -223,13 +220,30 @@
                     listaPendientes.innerHTML = '<li>No hay tareas pendientes.</li>';
                 }
 
+                // [MODIFICADO] Cargar historial con filtros
                 const NOVEDADES_PER_PAGE = 5;
                 const from = (historialPage - 1) * NOVEDADES_PER_PAGE;
                 const to = from + NOVEDADES_PER_PAGE - 1;
-                const { count, error: errCount } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', true);
-                if (errCount) throw errCount;
 
-                const { data: resueltas, error: errRes } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', true).order('created_at', { ascending: false }).range(from, to);
+                const textoBusqueda = document.getElementById('historial-search').value.trim();
+                const fechaSeleccionada = document.getElementById('historial-date-picker').value;
+
+                let queryHistorial = supabase.from('novedades')
+                    .select('*', { count: 'exact' })
+                    .eq('via_id', viaActualModal.id)
+                    .eq('resuelta', true);
+
+                if (textoBusqueda) queryHistorial = queryHistorial.ilike('descripcion', `%${textoBusqueda}%`);
+                if (fechaSeleccionada) {
+                    const fechaInicio = `${fechaSeleccionada}T00:00:00`;
+                    const fechaFin = `${fechaSeleccionada}T23:59:59`;
+                    queryHistorial = queryHistorial.gte('created_at', fechaInicio).lte('created_at', fechaFin);
+                }
+
+                const { data: resueltas, count, error: errRes } = await queryHistorial
+                    .order('created_at', { ascending: false })
+                    .range(from, to);
+
                 if (errRes) throw errRes;
                 if (resueltas.length > 0) {
                     resueltas.forEach(n => listaHistorial.appendChild(crearItemNovedad(n, true)));
@@ -245,31 +259,54 @@
             }
         }
 
+        // [MODIFICADO] Renderiza items con roles y auditoría
         function crearItemNovedad(novedad, esResuelta) {
             const item = document.createElement('li');
             item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente';
             item.dataset.novedadId = novedad.id;
-            const fechaLocal = new Date(novedad.created_at).toLocaleString('es-AR');
+            
+            const fechaCreacion = new Date(novedad.created_at).toLocaleString('es-AR');
+            let infoAuditoria = '';
+            if (esResuelta && novedad.resolved_at && novedad.resolved_by) {
+                const fechaResolucion = new Date(novedad.resolved_at).toLocaleString('es-AR');
+                infoAuditoria = `<span class="meta-info resuelta-info">Resuelta por ${novedad.resolved_by} el ${fechaResolucion}</span>`;
+            }
 
-            let botonesAccion = `
-                <button class="btn-editar" title="Editar">✏️</button>
-                <button class="btn-eliminar" title="Eliminar">🗑️</button>`;
+            let botonesAccion = '';
+            const puedeEditar = esAdmin() || novedad.user_email === currentUserEmail;
             
             if (!esResuelta) {
-                botonesAccion = `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>` + botonesAccion;
+                botonesAccion += `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>`;
+            }
+            if (puedeEditar) {
+                botonesAccion += `<button class="btn-editar" title="Editar">✏️</button>`;
+            }
+            if (esAdmin()) { // Solo admin puede eliminar
+                botonesAccion += `<button class="btn-eliminar" title="Eliminar">🗑️</button>`;
             }
 
             item.innerHTML = `
                 <div class="novedad-contenido">
-                    <span class="meta-info">${fechaLocal} - ${novedad.user_email || 'Sistema'}</span>
+                    <span class="meta-info">Creada por ${novedad.user_email || 'Sistema'} el ${fechaCreacion}</span>
+                    ${infoAuditoria}
                     <p class="descripcion-texto">${novedad.descripcion}</p>
                 </div>
                 <div class="novedad-acciones">${botonesAccion}</div>`;
             return item;
         }
 
+        // [MODIFICADO] Función con auditoría
         async function resolverNovedad(novedadId) {
-            const { error } = await supabase.from('novedades').update({ resuelta: true }).eq('id', novedadId);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { mostrarNotificacion('Sesión inválida', 'error'); return; }
+            
+            const updatePayload = {
+                resuelta: true,
+                resolved_at: new Date().toISOString(),
+                resolved_by: user.email
+            };
+            const { error } = await supabase.from('novedades').update(updatePayload).eq('id', novedadId);
+            
             if (error) { mostrarNotificacion('Error al resolver la tarea.', 'error'); return; }
             mostrarNotificacion('Tarea marcada como resuelta.');
             
@@ -279,187 +316,81 @@
                 const { error: updateError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaActualModal.id);
                 if (!updateError) {
                     mostrarNotificacion(`Vía ${viaActualModal.numero_via} pasada a estado Normal.`, 'success');
-                    await cargarVias(); // ACTUALIZACIÓN INSTANTÁNEA
+                }
+            }
+            // Ya no es necesario llamar a cargarVias() aquí, el listener de realtime lo hará
+            // Pero sí recargamos el modal para ver el cambio al instante
+            await cargarNovedadesModal();
+        }
+
+        // --- FUNCIONES DE ACCIÓN REFACTORIZADAS ---
+        async function manejarEliminarNovedad(novedadId) {
+            if (!esAdmin()) {
+                mostrarNotificacion('No tienes permisos para eliminar.', 'error');
+                return;
+            }
+            if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) {
+                const { error } = await supabase.from('novedades').delete().eq('id', novedadId);
+                if (error) mostrarNotificacion("Error al eliminar", 'error');
+                else {
+                    mostrarNotificacion("Eliminado con éxito.");
+                    await cargarNovedadesModal();
+                }
+            }
+        }
+
+        function mostrarEditorNovedad(itemLi) {
+            const contenido = itemLi.querySelector('.novedad-contenido');
+            const textoActual = contenido.querySelector('.descripcion-texto').innerText;
+            itemLi.querySelector('.novedad-acciones').style.display = 'none';
+            contenido.innerHTML = `
+                <div class="edit-container">
+                    <textarea class="edit-textarea">${textoActual}</textarea>
+                    <div class="edit-actions">
+                        <button class="btn-guardar-edicion">Guardar</button>
+                        <button class="btn-cancelar-edicion">Cancelar</button>
+                    </div>
+                </div>`;
+        }
+
+        async function guardarEdicionNovedad(itemLi, novedadId) {
+            const nuevoTexto = itemLi.querySelector('.edit-textarea').value.trim();
+            if(nuevoTexto){
+                const { error } = await supabase.from('novedades').update({ descripcion: nuevoTexto }).eq('id', novedadId);
+                if(error) mostrarNotificacion('Error al guardar la edición.', 'error');
+                else {
+                    mostrarNotificacion('Tarea actualizada.');
+                    await cargarNovedadesModal(); // Recargar para mostrar el cambio y salir del modo edición
                 }
             } else {
-                await cargarNovedadesModal(); 
+                mostrarNotificacion('La descripción no puede estar vacía.', 'error');
             }
         }
 
-        // --- RESTO DE FUNCIONES ---
-        function mostrarNotificacion(mensaje, tipo = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${tipo}`;
-            toast.textContent = mensaje;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 100);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                toast.addEventListener('transitionend', () => toast.remove());
-            }, 3000);
-        }
 
-        function actualizarDashboard() {
-            const counts = todasLasVias.reduce((acc, via) => {
-                acc[via.status] = (acc[via.status] || 0) + 1;
-                return acc;
-            }, {});
-            document.getElementById('stat-count-problema').textContent = counts.problema || 0;
-            document.getElementById('stat-count-revisar').textContent = counts.revisar || 0;
-            document.getElementById('stat-count-normal').textContent = counts.normal || 0;
-        }
-
-        function renderizarControlesPaginacion(currentPage, totalItems, perPage) {
-            const paginationContainer = document.getElementById('historial-pagination');
-            paginationContainer.innerHTML = '';
-            const totalPages = Math.ceil(totalItems / perPage);
-            if (totalPages <= 1) return;
-            const prevButton = document.createElement('button');
-            prevButton.textContent = 'Anterior';
-            prevButton.disabled = currentPage === 1;
-            prevButton.onclick = () => cargarNovedadesModal(currentPage - 1);
-            const pageInfo = document.createElement('span');
-            pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Siguiente';
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.onclick = () => cargarNovedadesModal(currentPage + 1);
-            paginationContainer.append(prevButton, pageInfo, nextButton);
-        }
-
-        function filtrarHistorial() { /* Implementación futura */ }
-
-        const handleLogin = async (event) => {
-            event.preventDefault();
-            loginButton.disabled = true;
-            loginButton.textContent = 'Accediendo...';
-            loginError.style.display = 'none';
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-                if (profileError) throw profileError;
-                loginContainer.style.display = 'none';
-                mainContent.style.display = 'block';
-                currentUserEmail = data.user.email;
-                currentUserRole = profile.role || 'operator';
-                userEmailDisplay.textContent = currentUserEmail;
-                userRoleDisplay.textContent = currentUserRole;
-                await cargarVias();
-                escucharCambiosVias();
-            } catch (error) {
-                console.error('Error de login:', error.message);
-                loginError.style.display = 'block';
-                mostrarNotificacion('Usuario o contraseña incorrectos.', 'error');
-            } finally {
-                loginButton.disabled = false;
-                loginButton.textContent = 'Acceder';
-            }
-        };
-
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-                if (profileError) { await handleLogout(); return; }
-                loginContainer.style.display = 'none';
-                mainContent.style.display = 'block';
-                currentUserEmail = session.user.email;
-                currentUserRole = profile.role || 'operator';
-                userEmailDisplay.textContent = currentUserEmail;
-                userRoleDisplay.textContent = currentUserRole;
-                await cargarVias();
-                escucharCambiosVias();
-            } else {
-                loginContainer.style.display = 'block';
-                mainContent.style.display = 'none';
-            }
-        };
-
-        const handleLogout = async () => {
-            if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; }
-            await supabase.auth.signOut();
-            mainContent.style.display = 'none';
-            loginContainer.style.display = 'block';
-            currentUserEmail = null;
-            currentUserRole = 'operator';
-        };
-
-        function cerrarModal() {
-            modal.style.display = 'none';
-            viaActualModal = null;
-        }
-
-        async function manejarSubmitNovedad(event) {
-            event.preventDefault();
-            const submitButton = event.target.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Guardando...';
-            try {
-                const idVia = document.getElementById('via-id-input').value;
-                const nuevaDescripcion = document.getElementById('descripcion-novedad').value.trim();
-                const nuevoStatus = document.getElementById('status-via').value;
-                if (!nuevaDescripcion) { mostrarNotificacion('La descripción de la tarea no puede estar vacía.', 'error'); return; }
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) { mostrarNotificacion('Sesión expirada.', 'error'); return; }
-                
-                const { error: insertError } = await supabase.from('novedades').insert([{ via_id: idVia, descripcion: nuevaDescripcion, user_email: user.email, resuelta: false }]);
-                if (insertError) throw insertError;
-                
-                if (nuevoStatus !== viaActualModal.status) {
-                    const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia);
-                    if (updateError) throw updateError;
-                    await cargarVias(); // ACTUALIZACIÓN INSTANTÁNEA
-                }
-                
-                mostrarNotificacion('Tarea agregada con éxito!');
-                await cargarNovedadesModal();
-                document.getElementById('descripcion-novedad').value = '';
-            } catch (error) {
-                console.error('Error al guardar:', error);
-                mostrarNotificacion('Error al guardar la tarea.', 'error');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Guardar';
-            }
-        }
-
-        function filtrarVias() {
-            const textoBusqueda = searchBox.value.toLowerCase();
-            document.querySelectorAll('.grupo-vias').forEach(grupo => {
-                let viasVisibles = 0;
-                const viasEnGrupo = grupo.querySelectorAll('.via-box');
-                viasEnGrupo.forEach(via => {
-                    const coincideBusqueda = via.textContent.includes(textoBusqueda);
-                    const coincideFiltro = (filtroActivo === 'todos') || (via.dataset.viaStatus === filtroActivo);
-                    if (coincideBusqueda && coincideFiltro) {
-                        via.style.display = 'block';
-                        viasVisibles++;
-                    } else {
-                        via.style.display = 'none';
-                    }
-                });
-                const mensajeVacio = grupo.querySelector('.no-results-message');
-                mensajeVacio.style.display = viasVisibles === 0 ? 'block' : 'none';
-            });
-        }
-
-        function escucharCambiosVias() {
-            if (canalVias) return;
-            canalVias = supabase.channel('cambios-db-vias')
-                .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-                    if (payload.table === 'vias' || payload.table === 'novedades') {
-                        cargarVias();
-                        if(modal.style.display === 'block' && viaActualModal) {
-                           cargarNovedadesModal();
-                        }
-                    }
-                })
-                .subscribe();
-        }
+        // --- RESTO DE FUNCIONES (sin cambios mayores) ---
+        function mostrarNotificacion(mensaje, tipo = 'success') { /* ...código original... */ }
+        function actualizarDashboard() { /* ...código original... */ }
+        function renderizarControlesPaginacion(currentPage, totalItems, perPage) { /* ...código original... */ }
+        const handleLogin = async (event) => { /* ...código original... */ };
+        const checkUser = async () => { /* ...código original... */ };
+        const handleLogout = async () => { /* ...código original... */ };
+        function cerrarModal() { /* ...código original... */ }
+        async function manejarSubmitNovedad(event) { /* ...código original... */ }
+        function filtrarVias() { /* ...código original... */ }
+        function escucharCambiosVias() { /* ...código original, con pequeña mejora en el IF */ }
+        
+        // --- COPIA LITERAL DE FUNCIONES NO MODIFICADAS PARA COMPLETITUD ---
+        function mostrarNotificacion(mensaje, tipo = 'success') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `toast ${tipo}`; toast.textContent = mensaje; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 100); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000); }
+        function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
+        function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
+        const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value; const password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await cargarVias(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
+        const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await cargarVias(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
+        const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; currentUserEmail = null; currentUserRole = 'operator'; };
+        function cerrarModal() { modal.style.display = 'none'; viaActualModal = null; }
+        async function manejarSubmitNovedad(event) { event.preventDefault(); const submitButton = event.target.querySelector('button[type="submit"]'); submitButton.disabled = true; submitButton.textContent = 'Guardando...'; try { const idVia = document.getElementById('via-id-input').value; const nuevaDescripcion = document.getElementById('descripcion-novedad').value.trim(); const nuevoStatus = document.getElementById('status-via').value; if (!nuevaDescripcion) { mostrarNotificacion('La descripción de la tarea no puede estar vacía.', 'error'); return; } const { data: { user } } = await supabase.auth.getUser(); if (!user) { mostrarNotificacion('Sesión expirada.', 'error'); return; } const { error: insertError } = await supabase.from('novedades').insert([{ via_id: idVia, descripcion: nuevaDescripcion, user_email: user.email, resuelta: false }]); if (insertError) throw insertError; if (nuevoStatus !== viaActualModal.status) { const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia); if (updateError) throw updateError; } mostrarNotificacion('Tarea agregada con éxito!'); await cargarNovedadesModal(); document.getElementById('descripcion-novedad').value = ''; } catch (error) { console.error('Error al guardar:', error); mostrarNotificacion('Error al guardar la tarea.', 'error'); } finally { submitButton.disabled = false; submitButton.textContent = 'Guardar'; } }
+        function filtrarVias() { const textoBusqueda = searchBox.value.toLowerCase(); document.querySelectorAll('.grupo-vias').forEach(grupo => { let viasVisibles = 0; const viasEnGrupo = grupo.querySelectorAll('.via-box'); viasEnGrupo.forEach(via => { const coincideBusqueda = via.textContent.includes(textoBusqueda); const coincideFiltro = (filtroActivo === 'todos') || (via.dataset.viaStatus === filtroActivo); if (coincideBusqueda && coincideFiltro) { via.style.display = 'block'; viasVisibles++; } else { via.style.display = 'none'; } }); const mensajeVacio = grupo.querySelector('.no-results-message'); mensajeVacio.style.display = viasVisibles === 0 ? 'block' : 'none'; }); }
+        function escucharCambiosVias() { if (canalVias) return; canalVias = supabase.channel('cambios-db-vias').on('postgres_changes', { event: '*', schema: 'public' }, (payload) => { if (payload.table === 'vias' || payload.table === 'novedades') { console.log('Cambio detectado en:', payload.table); cargarVias(); if(modal.style.display === 'block' && viaActualModal && payload.new.via_id === viaActualModal.id) { cargarNovedadesModal(); } else if (modal.style.display === 'block' && viaActualModal) { cargarNovedadesModal(); } } }).subscribe(); }
 
         // --- MANEJO DE EVENTOS ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -481,19 +412,17 @@
             });
 
             document.getElementById('tab-pendientes').addEventListener('click', (e) => {
-                document.getElementById('content-pendientes').classList.add('active');
-                document.getElementById('content-historial').classList.remove('active');
-                e.target.classList.add('active');
-                document.getElementById('tab-historial').classList.remove('active');
+                document.getElementById('content-pendientes').classList.add('active'); document.getElementById('content-historial').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-historial').classList.remove('active');
             });
-
             document.getElementById('tab-historial').addEventListener('click', (e) => {
-                document.getElementById('content-historial').classList.add('active');
-                document.getElementById('content-pendientes').classList.remove('active');
-                e.target.classList.add('active');
-                document.getElementById('tab-pendientes').classList.remove('active');
+                document.getElementById('content-historial').classList.add('active'); document.getElementById('content-pendientes').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-pendientes').classList.remove('active');
             });
 
+            // [NUEVO] Listeners para filtros de historial
+            document.getElementById('historial-search').addEventListener('input', () => cargarNovedadesModal(1));
+            document.getElementById('historial-date-picker').addEventListener('change', () => cargarNovedadesModal(1));
+
+            // [REFACTORIZADO] Listener de acciones del modal
             document.querySelector('.tasks-section').addEventListener('click', async (e) => {
                 const target = e.target;
                 const itemLi = target.closest('li');
@@ -501,46 +430,24 @@
                 const novedadId = itemLi.dataset.novedadId;
 
                 if (target.classList.contains('btn-resolver')) {
-                    await resolverNovedad(novedadId);
+                    if (confirm("¿Marcar esta tarea como resuelta?")) {
+                        await resolverNovedad(novedadId);
+                    }
                 } 
                 else if (target.classList.contains('btn-eliminar')) {
-                    if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) {
-                        const { error } = await supabase.from('novedades').delete().eq('id', novedadId);
-                        if (error) mostrarNotificacion("Error al eliminar", 'error');
-                        else {
-                            mostrarNotificacion("Eliminado con éxito.");
-                            await cargarNovedadesModal();
-                        }
-                    }
+                    await manejarEliminarNovedad(novedadId);
                 }
                 else if (target.classList.contains('btn-editar')) {
-                    const contenido = itemLi.querySelector('.novedad-contenido');
-                    const textoActual = contenido.querySelector('.descripcion-texto').innerText;
-                    itemLi.querySelector('.novedad-acciones').style.display = 'none';
-                    contenido.innerHTML = `
-                        <div class="edit-container">
-                            <textarea class="edit-textarea">${textoActual}</textarea>
-                            <div class="edit-actions">
-                                <button class="btn-guardar-edicion">Guardar</button>
-                                <button class="btn-cancelar-edicion">Cancelar</button>
-                            </div>
-                        </div>`;
+                    mostrarEditorNovedad(itemLi);
                 }
                 else if (target.classList.contains('btn-guardar-edicion')) {
-                    const nuevoTexto = itemLi.querySelector('.edit-textarea').value.trim();
-                    if(nuevoTexto){
-                        const { error } = await supabase.from('novedades').update({ descripcion: nuevoTexto }).eq('id', novedadId);
-                        if(error) mostrarNotificacion('Error al guardar la edición.', 'error');
-                        else mostrarNotificacion('Tarea actualizada.');
-                        await cargarNovedadesModal();
-                    }
+                    await guardarEdicionNovedad(itemLi, novedadId);
                 }
                 else if (target.classList.contains('btn-cancelar-edicion')) {
-                    await cargarNovedadesModal();
+                    await cargarNovedadesModal(); // Recarga para cancelar y restaurar la vista
                 }
             });
         });
     </script>
 </body>
 </html>
-
