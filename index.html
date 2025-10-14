@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Vías de Peaje v3.2 - Mejorado</title>
+    <title>Control de Vías de Peaje v3.3 - Firma Neón</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
 
     <style>
         /* --- ESTILOS GENERALES Y FONDO --- */
-        body { font-family: 'Roboto', sans-serif; background: linear-gradient(-45deg, #2e3440, #3b4252, #434c5e, #4c566a); background-size: 400% 400%; animation: gradientBG 15s ease infinite; color: #eceff4; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+        body { font-family: 'Roboto', sans-serif; background: linear-gradient(-45deg, #2e3440, #3b4252, #434c5e, #4c566a); background-size: 400% 400%; animation: gradientBG 15s ease infinite; color: #eceff4; margin: 0; padding: 20px; display: flex; flex-direction: column; /* Cambiado para permitir que el footer se alinee */ justify-content: center; align-items: center; min-height: 100vh; }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .container { max-width: 1400px; margin: 0 auto; width: 100%;}
         
@@ -62,12 +62,10 @@
         .no-results-message { display: none; text-align: center; padding: 20px; font-style: italic; color: #d8dee9; }
         .grupos-secundarios-container { display: flex; gap: 25px; justify-content: space-between; margin-bottom: 25px; }
         .grupos-secundarios-container .grupo-vias { flex-grow: 1; margin-bottom: 0; }
+        
+        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
+        #tooltip-problema.visible { opacity: 1; transition: opacity 0.2s; }
 
-        /* --- [CORREGIDO] ESTILOS TOOLTIP --- */
-        /* --- [MEJORADO] ESTILOS TOOLTIP --- */
-        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); /* Transición eliminada de aquí */ }
-        #tooltip-problema.visible { opacity: 1; transition: opacity 0.2s; /* Transición aplicada solo al aparecer */ }
-        /* --- ESTILOS MODAL CON TABS Y EDITOR --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background-color: #eceff4; color: #2e3440; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
@@ -85,7 +83,7 @@
         .novedad-resuelta { border-left: 5px solid #a3be8c; }
         .novedad-contenido { flex-grow: 1; word-break: break-word; }
         .meta-info { display: block; font-size: 0.8em; color: #4c566a; margin-bottom: 5px; }
-        .meta-info.resuelta-info { color: #a3be8c; font-weight: bold; margin-top: 4px; } /* [NUEVO] Estilo para auditoría */
+        .meta-info.resuelta-info { color: #a3be8c; font-weight: bold; margin-top: 4px; }
         .novedad-acciones button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.2em; border-radius: 4px; transition: transform 0.1s; }
         .novedad-acciones button:hover { transform: scale(1.2); }
         .btn-resolver { color: #a3be8c; font-weight: bold; }
@@ -110,6 +108,49 @@
         .loader-container { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(46, 52, 64, 0.7); z-index: 10; justify-content: center; align-items: center; border-radius: 12px; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #88c0d0; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- [NUEVO] ESTILOS FOOTER CON EFECTO NEÓN --- */
+        #page-footer {
+            width: 100%;
+            max-width: 1400px;
+            margin: 40px auto 20px auto;
+            padding: 20px 0;
+            text-align: center;
+            border-top: 1px solid #4c566a;
+        }
+
+        .neon-text {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow:
+                0 0 7px #fff,
+                0 0 10px #fff,
+                0 0 21px #fff,
+                0 0 42px #88c0d0,
+                0 0 82px #88c0d0,
+                0 0 92px #88c0d0,
+                0 0 102px #88c0d0,
+                0 0 151px #88c0d0;
+            animation: neon-flicker 2s infinite alternate;
+        }
+
+        @keyframes neon-flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                text-shadow:
+                    0 0 4px #fff,
+                    0 0 11px #fff,
+                    0 0 19px #fff,
+                    0 0 40px #88c0d0,
+                    0 0 80px #88c0d0,
+                    0 0 90px #88c0d0,
+                    0 0 100px #88c0d0,
+                    0 0 150px #88c0d0;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -118,10 +159,6 @@
     <div id="modal-via" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h2 id="modal-title"></h2><div class="modal-body"><div class="tasks-section"><div class="modal-tabs"><button id="tab-pendientes" class="active">Pendientes</button><button id="tab-historial">Historial</button></div><div id="content-pendientes" class="tab-content active"><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-pendientes" style="list-style-type: none; padding: 0;"></ul></div></div><div id="content-historial" class="tab-content"><div class="historial-filtros"><input type="search" id="historial-search" placeholder="Buscar en el historial..."><input type="date" id="historial-date-picker"></div><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-historial" style="list-style-type: none; padding: 0;"></ul></div><div id="historial-pagination" class="pagination-controls"></div></div></div><div class="form-section"><h3>Agregar Tarea</h3><form id="form-novedad"><input type="hidden" id="via-id-input"><label for="descripcion-novedad">Nueva Tarea:</label><textarea id="descripcion-novedad" rows="4" placeholder="Describir la tarea pendiente..."></textarea><label for="status-via">Estado de la Vía:</label><select id="status-via"><option value="normal">Normal (Verde)</option><option value="revisar">Revisar (Amarillo)</option><option value="problema">Problema (Rojo)</option></select><button type="submit">Guardar</button></form></div></div></div></div>
     <div id="toast-container"></div>
     <div id="tooltip-problema"></div>
-
-        <!-- ... tu HTML de arriba sigue igual ... -->
-
-       <!-- ... tu HTML de arriba sigue igual ... -->
 
     <script>
         // --- Configuración y Elementos DOM ---
@@ -600,11 +637,5 @@
             });
         });
     </script>
-
-    <!-- ... tu etiqueta </body> y </html> de cierre ... -->
 </body>
 </html>
-
-
-
-
