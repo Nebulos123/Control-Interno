@@ -121,6 +121,8 @@
 
         <!-- ... tu HTML de arriba sigue igual ... -->
 
+       <!-- ... tu HTML de arriba sigue igual ... -->
+
     <script>
         // --- Configuración y Elementos DOM ---
         const SUPABASE_URL = 'https://ybrwwgkouxdgdfpdofin.supabase.co';
@@ -194,7 +196,7 @@
             document.getElementById('descripcion-novedad').value = '';
             
             const statusSelect = document.getElementById('status-via');
-            statusSelect.disabled = false; // Permitimos cambiar el estado
+            statusSelect.disabled = false; 
 
             document.getElementById('tab-pendientes').click();
             modal.style.display = 'block';
@@ -311,27 +313,165 @@
                 const { error: updateError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaActualModal.id);
                 if (!updateError) {
                     mostrarNotificacion(`Vía ${viaActualModal.numero_via} pasada a estado Normal.`, 'success');
-                    await cargarVias(); // [AÑADIDO] Refresca la grilla principal para mostrar el cambio a verde.
+                    await cargarVias(); 
                 }
             }
             await cargarNovedadesModal();
         }
 
-        // --- FUNCIONES DE ACCIÓN REFACTORIZADAS ---
-        async function manejarEliminarNovedad(novedadId) { /* ...código sin cambios... */ }
-        function mostrarEditorNovedad(itemLi) { /* ...código sin cambios... */ }
-        async function guardarEdicionNovedad(itemLi, novedadId) { /* ...código sin cambios... */ }
+        async function manejarEliminarNovedad(novedadId) {
+            if (!esAdmin()) {
+                mostrarNotificacion('No tienes permisos para eliminar.', 'error');
+                return;
+            }
+            if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) {
+                const { error } = await supabase.from('novedades').delete().eq('id', novedadId);
+                if (error) mostrarNotificacion("Error al eliminar", 'error');
+                else {
+                    mostrarNotificacion("Eliminado con éxito.");
+                    await cargarNovedadesModal();
+                }
+            }
+        }
 
-        // --- RESTO DE FUNCIONES ---
-        function mostrarNotificacion(mensaje, tipo = 'success') { /* ...código sin cambios... */ }
-        function actualizarDashboard() { /* ...código sin cambios... */ }
-        function renderizarControlesPaginacion(currentPage, totalItems, perPage) { /* ...código sin cambios... */ }
-        const handleLogin = async (event) => { /* ...código sin cambios... */ };
-        const checkUser = async () => { /* ...código sin cambios... */ };
-        const handleLogout = async () => { /* ...código sin cambios... */ };
-        function cerrarModal() { /* ...código sin cambios... */ }
-        function filtrarVias() { /* ...código sin cambios... */ }
-        
+        function mostrarEditorNovedad(itemLi) {
+            const contenido = itemLi.querySelector('.novedad-contenido');
+            const textoActual = contenido.querySelector('.descripcion-texto').innerText;
+            itemLi.querySelector('.novedad-acciones').style.display = 'none';
+            contenido.innerHTML = `
+                <div class="edit-container">
+                    <textarea class="edit-textarea">${textoActual}</textarea>
+                    <div class="edit-actions">
+                        <button class="btn-guardar-edicion">Guardar</button>
+                        <button class="btn-cancelar-edicion">Cancelar</button>
+                    </div>
+                </div>`;
+        }
+
+        async function guardarEdicionNovedad(itemLi, novedadId) {
+            const nuevoTexto = itemLi.querySelector('.edit-textarea').value.trim();
+            if(nuevoTexto){
+                const { error } = await supabase.from('novedades').update({ descripcion: nuevoTexto }).eq('id', novedadId);
+                if(error) mostrarNotificacion('Error al guardar la edición.', 'error');
+                else {
+                    mostrarNotificacion('Tarea actualizada.');
+                    await cargarNovedadesModal(); 
+                }
+            } else {
+                mostrarNotificacion('La descripción no puede estar vacía.', 'error');
+            }
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            toast.textContent = mensaje;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3000);
+        }
+
+        function actualizarDashboard() {
+            const counts = todasLasVias.reduce((acc, via) => {
+                acc[via.status] = (acc[via.status] || 0) + 1;
+                return acc;
+            }, {});
+            document.getElementById('stat-count-problema').textContent = counts.problema || 0;
+            document.getElementById('stat-count-revisar').textContent = counts.revisar || 0;
+            document.getElementById('stat-count-normal').textContent = counts.normal || 0;
+        }
+
+        function renderizarControlesPaginacion(currentPage, totalItems, perPage) {
+            const paginationContainer = document.getElementById('historial-pagination');
+            paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(totalItems / perPage);
+            if (totalPages <= 1) return;
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Anterior';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => cargarNovedadesModal(currentPage - 1);
+            const pageInfo = document.createElement('span');
+            pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Siguiente';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => cargarNovedadesModal(currentPage + 1);
+            paginationContainer.append(prevButton, pageInfo, nextButton);
+        }
+
+        const handleLogin = async (event) => {
+            event.preventDefault();
+            loginButton.disabled = true;
+            loginButton.textContent = 'Accediendo...';
+            loginError.style.display = 'none';
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+                if (profileError) throw profileError;
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                currentUserEmail = data.user.email;
+                currentUserRole = profile.role || 'operator';
+                userEmailDisplay.textContent = currentUserEmail;
+                userRoleDisplay.textContent = currentUserRole;
+                await cargarVias();
+                escucharCambiosVias();
+            } catch (error) {
+                console.error('Error de login:', error.message);
+                loginError.style.display = 'block';
+                mostrarNotificacion('Usuario o contraseña incorrectos.', 'error');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Acceder';
+            }
+        };
+
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+                if (profileError) {
+                    await handleLogout();
+                    return;
+                }
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                currentUserEmail = session.user.email;
+                currentUserRole = profile.role || 'operator';
+                userEmailDisplay.textContent = currentUserEmail;
+                userRoleDisplay.textContent = currentUserRole;
+                await cargarVias();
+                escucharCambiosVias();
+            } else {
+                loginContainer.style.display = 'block';
+                mainContent.style.display = 'none';
+            }
+        };
+
+        const handleLogout = async () => {
+            if (canalVias) {
+                supabase.removeChannel(canalVias);
+                canalVias = null;
+            }
+            await supabase.auth.signOut();
+            mainContent.style.display = 'none';
+            loginContainer.style.display = 'block';
+            currentUserEmail = null;
+            currentUserRole = 'operator';
+        };
+
+        function cerrarModal() {
+            modal.style.display = 'none';
+            viaActualModal = null;
+        }
+
         async function manejarSubmitNovedad(event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -358,7 +498,7 @@
                 if (nuevoStatus !== viaActualModal.status) {
                     const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia);
                     if (updateError) throw updateError;
-                    await cargarVias(); // [AÑADIDO] Refresca la grilla principal para mostrar el cambio de color.
+                    await cargarVias();
                 }
                 
                 mostrarNotificacion('Tarea agregada con éxito!');
@@ -372,8 +512,27 @@
                 submitButton.textContent = 'Guardar';
             }
         }
+
+        function filtrarVias() {
+            const textoBusqueda = searchBox.value.toLowerCase();
+            document.querySelectorAll('.grupo-vias').forEach(grupo => {
+                let viasVisibles = 0;
+                const viasEnGrupo = grupo.querySelectorAll('.via-box');
+                viasEnGrupo.forEach(via => {
+                    const coincideBusqueda = via.textContent.includes(textoBusqueda);
+                    const coincideFiltro = (filtroActivo === 'todos') || (via.dataset.viaStatus === filtroActivo);
+                    if (coincideBusqueda && coincideFiltro) {
+                        via.style.display = 'block';
+                        viasVisibles++;
+                    } else {
+                        via.style.display = 'none';
+                    }
+                });
+                const mensajeVacio = grupo.querySelector('.no-results-message');
+                mensajeVacio.style.display = viasVisibles === 0 ? 'block' : 'none';
+            });
+        }
         
-        // El listener es bueno para sincronizar entre diferentes usuarios, pero las llamadas directas dan la respuesta instantánea al usuario que realiza la acción.
         function escucharCambiosVias() {
             if (canalVias) return;
             canalVias = supabase.channel('cambios-db-vias')
@@ -390,24 +549,62 @@
         }
 
         // --- MANEJO DE EVENTOS ---
-        document.addEventListener('DOMContentLoaded', () => { /* ...código sin cambios... */ });
-
-        // --- Bloque de funciones sin cambios para copiar y pegar ---
-        async function manejarEliminarNovedad(novedadId) { if (!esAdmin()) { mostrarNotificacion('No tienes permisos para eliminar.', 'error'); return; } if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) { const { error } = await supabase.from('novedades').delete().eq('id', novedadId); if (error) mostrarNotificacion("Error al eliminar", 'error'); else { mostrarNotificacion("Eliminado con éxito."); await cargarNovedadesModal(); } } }
-        function mostrarEditorNovedad(itemLi) { const contenido = itemLi.querySelector('.novedad-contenido'); const textoActual = contenido.querySelector('.descripcion-texto').innerText; itemLi.querySelector('.novedad-acciones').style.display = 'none'; contenido.innerHTML = `<div class="edit-container"><textarea class="edit-textarea">${textoActual}</textarea><div class="edit-actions"><button class="btn-guardar-edicion">Guardar</button><button class="btn-cancelar-edicion">Cancelar</button></div></div>`; }
-        async function guardarEdicionNovedad(itemLi, novedadId) { const nuevoTexto = itemLi.querySelector('.edit-textarea').value.trim(); if(nuevoTexto){ const { error } = await supabase.from('novedades').update({ descripcion: nuevoTexto }).eq('id', novedadId); if(error) mostrarNotificacion('Error al guardar la edición.', 'error'); else { mostrarNotificacion('Tarea actualizada.'); await cargarNovedadesModal(); } } else { mostrarNotificacion('La descripción no puede estar vacía.', 'error'); } }
-        function mostrarNotificacion(mensaje, tipo = 'success') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `toast ${tipo}`; toast.textContent = mensaje; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 100); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000); }
-        function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
-        function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
-        const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value; const password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await cargarVias(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
-        const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await cargarVias(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
-        const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; currentUserEmail = null; currentUserRole = 'operator'; };
-        function cerrarModal() { modal.style.display = 'none'; viaActualModal = null; }
-        function filtrarVias() { const textoBusqueda = searchBox.value.toLowerCase(); document.querySelectorAll('.grupo-vias').forEach(grupo => { let viasVisibles = 0; const viasEnGrupo = grupo.querySelectorAll('.via-box'); viasEnGrupo.forEach(via => { const coincideBusqueda = via.textContent.includes(textoBusqueda); const coincideFiltro = (filtroActivo === 'todos') || (via.dataset.viaStatus === filtroActivo); if (coincideBusqueda && coincideFiltro) { via.style.display = 'block'; viasVisibles++; } else { via.style.display = 'none'; } }); const mensajeVacio = grupo.querySelector('.no-results-message'); mensajeVacio.style.display = viasVisibles === 0 ? 'block' : 'none'; }); }
-        document.addEventListener('DOMContentLoaded', () => { checkUser(); loginForm.addEventListener('submit', handleLogin); logoutButton.addEventListener('click', handleLogout); closeButton.addEventListener('click', cerrarModal); window.addEventListener('click', (event) => { if (event.target == modal) { cerrarModal(); } }); formNovedad.addEventListener('submit', manejarSubmitNovedad); searchBox.addEventListener('input', filtrarVias); filterButtons.forEach(button => { button.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); filtroActivo = button.id.replace('filter-', ''); filtrarVias(); }); }); document.getElementById('tab-pendientes').addEventListener('click', (e) => { document.getElementById('content-pendientes').classList.add('active'); document.getElementById('content-historial').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-historial').classList.remove('active'); }); document.getElementById('tab-historial').addEventListener('click', (e) => { document.getElementById('content-historial').classList.add('active'); document.getElementById('content-pendientes').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-pendientes').classList.remove('active'); }); document.getElementById('historial-search').addEventListener('input', () => cargarNovedadesModal(1)); document.getElementById('historial-date-picker').addEventListener('change', () => cargarNovedadesModal(1)); document.querySelector('.tasks-section').addEventListener('click', async (e) => { const target = e.target; const itemLi = target.closest('li'); if (!itemLi) return; const novedadId = itemLi.dataset.novedadId; if (target.classList.contains('btn-resolver')) { if (confirm("¿Marcar esta tarea como resuelta?")) { await resolverNovedad(novedadId); } } else if (target.classList.contains('btn-eliminar')) { await manejarEliminarNovedad(novedadId); } else if (target.classList.contains('btn-editar')) { mostrarEditorNovedad(itemLi); } else if (target.classList.contains('btn-guardar-edicion')) { await guardarEdicionNovedad(itemLi, novedadId); } else if (target.classList.contains('btn-cancelar-edicion')) { await cargarNovedadesModal(); } }); });
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUser();
+            loginForm.addEventListener('submit', handleLogin);
+            logoutButton.addEventListener('click', handleLogout);
+            closeButton.addEventListener('click', cerrarModal);
+            window.addEventListener('click', (event) => { if (event.target == modal) { cerrarModal(); } });
+            formNovedad.addEventListener('submit', manejarSubmitNovedad);
+            searchBox.addEventListener('input', filtrarVias);
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    filtroActivo = button.id.replace('filter-', '');
+                    filtrarVias();
+                });
+            });
+            document.getElementById('tab-pendientes').addEventListener('click', (e) => {
+                document.getElementById('content-pendientes').classList.add('active');
+                document.getElementById('content-historial').classList.remove('active');
+                e.target.classList.add('active');
+                document.getElementById('tab-historial').classList.remove('active');
+            });
+            document.getElementById('tab-historial').addEventListener('click', (e) => {
+                document.getElementById('content-historial').classList.add('active');
+                document.getElementById('content-pendientes').classList.remove('active');
+                e.target.classList.add('active');
+                document.getElementById('tab-pendientes').classList.remove('active');
+            });
+            document.getElementById('historial-search').addEventListener('input', () => cargarNovedadesModal(1));
+            document.getElementById('historial-date-picker').addEventListener('change', () => cargarNovedadesModal(1));
+            document.querySelector('.tasks-section').addEventListener('click', async (e) => {
+                const target = e.target;
+                const itemLi = target.closest('li');
+                if (!itemLi) return;
+                const novedadId = itemLi.dataset.novedadId;
+                if (target.classList.contains('btn-resolver')) {
+                    if (confirm("¿Marcar esta tarea como resuelta?")) {
+                        await resolverNovedad(novedadId);
+                    }
+                } else if (target.classList.contains('btn-eliminar')) {
+                    await manejarEliminarNovedad(novedadId);
+                } else if (target.classList.contains('btn-editar')) {
+                    mostrarEditorNovedad(itemLi);
+                } else if (target.classList.contains('btn-guardar-edicion')) {
+                    await guardarEdicionNovedad(itemLi, novedadId);
+                } else if (target.classList.contains('btn-cancelar-edicion')) {
+                    await cargarNovedadesModal();
+                }
+            });
+        });
     </script>
 
     <!-- ... tu etiqueta </body> y </html> de cierre ... -->
 </body>
 </html>
+
+
+
 
