@@ -194,7 +194,7 @@
             document.getElementById('descripcion-novedad').value = '';
             
             const statusSelect = document.getElementById('status-via');
-            statusSelect.disabled = !esAdmin(); 
+            statusSelect.disabled = false; 
 
             document.getElementById('tab-pendientes').click();
             modal.style.display = 'block';
@@ -431,5 +431,6 @@
     <!-- ... tu etiqueta </body> y </html> de cierre ... -->
 </body>
 </html>
+
 
 
