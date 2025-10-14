@@ -64,10 +64,9 @@
         .grupos-secundarios-container .grupo-vias { flex-grow: 1; margin-bottom: 0; }
 
         /* --- [CORREGIDO] ESTILOS TOOLTIP --- */
-        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; transition: opacity 0.2s ease-in-out; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
-        #tooltip-problema.visible { opacity: 1; }
-        #tooltip-problema strong { display: block; margin-bottom: 5px; border-bottom: 1px solid rgba(236, 239, 244, 0.5); padding-bottom: 5px; }
-
+        /* --- [MEJORADO] ESTILOS TOOLTIP --- */
+        #tooltip-problema { position: absolute; background-color: #bf616a; color: #eceff4; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); /* Transición eliminada de aquí */ }
+        #tooltip-problema.visible { opacity: 1; transition: opacity 0.2s; /* Transición aplicada solo al aparecer */ }
         /* --- ESTILOS MODAL CON TABS Y EDITOR --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background-color: #eceff4; color: #2e3440; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -432,4 +431,5 @@
     <!-- ... tu etiqueta </body> y </html> de cierre ... -->
 </body>
 </html>
+
 
