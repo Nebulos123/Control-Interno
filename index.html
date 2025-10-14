@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Vías de Peaje v3.5 - Corregido</title>
+    <title>Control de Vías de Peaje v3.6 - Final y Corregido</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -205,7 +205,7 @@
 
         const esAdmin = () => currentUserRole === 'admin';
 
-        // --- [MODIFICADO] LÓGICA DE TOOLTIPS ---
+        // --- LÓGICA DE TOOLTIPS (CORREGIDA Y MEJORADA) ---
         async function mostrarTooltip(viaId, targetElement, status) {
             tooltipProblema.className = `tooltip-${status}`; 
             const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single();
@@ -677,3 +677,4 @@
     </script>
 </body>
 </html>
+
