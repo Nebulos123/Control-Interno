@@ -160,6 +160,11 @@
     <div id="toast-container"></div>
     <div id="tooltip-problema"></div>
 
+    <!-- [NUEVO] Paso 1: HTML del Footer -->
+    <footer id="page-footer">
+        <p class="neon-text">&copy; <span id="footer-year"></span> - Desarrollado por El Sr.H sin fines de Lucro</p>
+    </footer>
+
     <script>
         // --- Configuración y Elementos DOM ---
         const SUPABASE_URL = 'https://ybrwwgkouxdgdfpdofin.supabase.co';
@@ -587,6 +592,9 @@
 
         // --- MANEJO DE EVENTOS ---
         document.addEventListener('DOMContentLoaded', () => {
+            // [NUEVO] Paso 3: Lógica para el año del footer
+            document.getElementById('footer-year').textContent = new Date().getFullYear();
+
             checkUser();
             loginForm.addEventListener('submit', handleLogin);
             logoutButton.addEventListener('click', handleLogout);
