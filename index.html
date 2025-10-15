@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Vías de Peaje v3.8 - Búsqueda Mejorada</title>
+    <title>Control de Vías de Peaje v3.9 - Mejoras de UI</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,6 +63,7 @@
         .grupos-secundarios-container { display: flex; gap: 25px; justify-content: space-between; margin-bottom: 25px; }
         .grupos-secundarios-container .grupo-vias { flex-grow: 1; margin-bottom: 0; }
         
+        /* --- [CORREGIDO] ESTILOS TOOLTIP --- */
         #tooltip-problema {
             position: absolute;
             padding: 10px 15px;
@@ -74,10 +75,10 @@
             max-width: 250px;
             text-align: left;
             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transition: opacity 0.2s ease-in-out;
         }
         #tooltip-problema.visible {
             opacity: 1;
-            transition: opacity 0.2s; 
         }
         #tooltip-problema strong {
             display: block;
@@ -218,14 +219,12 @@
         .busqueda-global-input button:hover {
             background-color: #8fbcbb;
         }
-
         #global-search-results-container h3 {
             margin-top: 0;
             border-bottom: 2px solid #5e81ac;
             padding-bottom: 10px;
             margin-bottom: 15px;
         }
-
         #global-search-results-list {
             list-style-type: none;
             padding: 0;
@@ -275,6 +274,27 @@
             background-color: #a3be8c;
         }
 
+        /* --- [NUEVO] ESTILOS PARA MEJORAR FORMULARIO DE TAREAS --- */
+        .form-section label {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        .form-section textarea,
+        .form-section select,
+        .form-section button {
+            font-size: 1em;
+            padding: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #descripcion-novedad {
+            min-height: 120px;
+        }
+        .form-section button[type="submit"] {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -300,7 +320,7 @@
     <div id="tooltip-problema"></div>
 
     <footer id="page-footer">
-        <p class="neon-text">&copy; <span id="footer-year"></span> - Desarrollado por El SR.H sin fines de Lucro</p>
+        <p class="neon-text">&copy; <span id="footer-year"></span> - Desarrollado por El Sr.H sin fines de Lucro</p>
     </footer>
 
     <script>
@@ -328,10 +348,9 @@
             tooltipProblema.classList.add('visible');
         }
 
+        // [CORREGIDO] Lógica de ocultar tooltip
         function ocultarTooltip() {
             tooltipProblema.classList.remove('visible');
-            tooltipProblema.style.transition = 'none';
-            setTimeout(() => { tooltipProblema.style.transition = ''; }, 0);
         }
 
         // --- LÓGICA PRINCIPAL ---
@@ -848,7 +867,6 @@
                 }
             });
 
-            // [NUEVO] Ocultar resultados si el campo de búsqueda global se vacía
             globalSearchBox.addEventListener('input', () => {
                 if (globalSearchBox.value.trim() === '') {
                     document.getElementById('global-search-results-container').style.display = 'none';
