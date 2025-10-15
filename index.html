@@ -580,7 +580,7 @@
             const { error } = await supabase.from('novedades').update(updatePayload).eq('id', novedadId);
             
             if (error) { mostrarNotificacion('Error al resolver la tarea.', 'error'); return; }
-            mostrarNotificacion(''Muy Bien, ¡te ganaste 1 poroto! 🥳'');
+            mostrarNotificacion('Muy Bien, ¡te ganaste 1 poroto! 🥳');
             
             const { count } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', false);
             
@@ -896,4 +896,5 @@
     </script>
 </body>
 </html>
+
 
