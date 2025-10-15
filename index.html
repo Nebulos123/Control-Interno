@@ -205,7 +205,7 @@
 
         const esAdmin = () => currentUserRole === 'admin';
 
-        // --- LÓGICA DE TOOLTIPS (CORREGIDA Y MEJORADA) ---
+        // --- LÓGICA DE TOOLTIPS ---
         async function mostrarTooltip(viaId, targetElement, status) {
             tooltipProblema.className = `tooltip-${status}`; 
             const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single();
@@ -677,4 +677,5 @@
     </script>
 </body>
 </html>
+
 
