@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMAS Y ALGO MAS BB</title>
+    <title>SOL DE CITRINO</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,6 +292,94 @@
             font-size: 1.1em;
             font-weight: bold;
         }
+
+        /* --- [NUEVO] ESTILOS PARA EL FRASCO DE POROTOS --- */
+        #poroto-jar-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            text-align: center;
+            z-index: 2000;
+        }
+        #poroto-jar {
+            width: 100px;
+            height: 120px;
+            background: rgba(216, 222, 233, 0.2);
+            border: 3px solid #d8dee9;
+            border-radius: 5px 5px 25px 25px;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: flex-end;
+        }
+        #poroto-jar::before { /* Tapa del frasco */
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 10px;
+            background-color: #4c566a;
+            border: 3px solid #d8dee9;
+            border-radius: 5px;
+        }
+        #porotos-container {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 20px;
+            gap: 2px;
+            padding: 5px;
+            box-sizing: border-box;
+            align-content: end;
+        }
+        .poroto {
+            width: 18px;
+            height: 15px;
+            background: linear-gradient(135deg, #c3a17a, #8e6f4d);
+            border-radius: 50%;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            animation: poroto-fall 0.5s ease-out;
+            justify-self: center;
+        }
+        #poroto-counter {
+            background-color: rgba(46, 52, 64, 0.8);
+            color: #eceff4;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-weight: bold;
+            border: 1px solid #4c566a;
+        }
+        @keyframes poroto-fall {
+            from {
+                transform: translateY(-120px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .jar-full-animation {
+            animation: jar-shake 0.5s ease-in-out;
+        }
+        @keyframes jar-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-2deg); }
+            75% { transform: translateX(5px) rotate(2deg); }
+        }
+        .poroto-exit {
+            animation: poroto-fade-out 0.5s ease-in forwards;
+        }
+        @keyframes poroto-fade-out {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0); }
+        }
     </style>
 </head>
 <body>
@@ -316,6 +404,14 @@
     <div id="toast-container"></div>
     <div id="tooltip-problema"></div>
 
+    <!-- [NUEVO] HTML DEL FRASCO DE POROTOS -->
+    <div id="poroto-jar-container">
+        <div id="poroto-jar">
+            <div id="porotos-container"></div>
+        </div>
+        <div id="poroto-counter">0 / 20</div>
+    </div>
+
     <footer id="page-footer">
         <p class="neon-text">&copy; <span id="footer-year"></span> - Desarrollado por El SR.H sin fines de Lucro</p>
     </footer>
@@ -331,6 +427,58 @@
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
 
         const esAdmin = () => currentUserRole === 'admin';
+
+        // --- [NUEVO] LÓGICA PARA EL FRASCO DE POROTOS ---
+        const MAX_POROTOS = 20;
+        let porotoCount = 0;
+        const porotosContainer = document.getElementById('porotos-container');
+        const porotoCounterDisplay = document.getElementById('poroto-counter');
+        const porotoJar = document.getElementById('poroto-jar');
+
+        function addPoroto() {
+            if (porotoCount >= MAX_POROTOS) return;
+            porotoCount++;
+            localStorage.setItem('porotoCount', porotoCount);
+            const poroto = document.createElement('div');
+            poroto.className = 'poroto';
+            porotosContainer.appendChild(poroto);
+            updatePorotoCounter();
+            if (porotoCount === MAX_POROTOS) {
+                porotoJar.classList.add('jar-full-animation');
+                mostrarNotificacion('¡Frasco lleno! Buen trabajo equipo. 🎉', 'success');
+                setTimeout(resetJar, 2000);
+            }
+        }
+
+        function resetJar() {
+            porotoJar.classList.remove('jar-full-animation');
+            const porotos = porotosContainer.querySelectorAll('.poroto');
+            porotos.forEach(p => p.classList.add('poroto-exit'));
+            setTimeout(() => {
+                porotosContainer.innerHTML = '';
+                porotoCount = 0;
+                localStorage.setItem('porotoCount', 0);
+                updatePorotoCounter();
+            }, 500);
+        }
+
+        function updatePorotoCounter() {
+            porotoCounterDisplay.textContent = `${porotoCount} / ${MAX_POROTOS}`;
+        }
+
+        function renderJarState() {
+            const savedCount = parseInt(localStorage.getItem('porotoCount')) || 0;
+            porotoCount = savedCount;
+            porotosContainer.innerHTML = '';
+            for (let i = 0; i < porotoCount; i++) {
+                const poroto = document.createElement('div');
+                poroto.className = 'poroto';
+                poroto.style.animation = 'none';
+                porotosContainer.appendChild(poroto);
+            }
+            updatePorotoCounter();
+        }
+
 
         // --- LÓGICA DE TOOLTIPS ---
         async function mostrarTooltip(viaId, targetElement, status) {
@@ -576,6 +724,8 @@
             const { error } = await supabase.from('novedades').update(updatePayload).eq('id', novedadId);
             
             if (error) { mostrarNotificacion('Error al resolver la tarea.', 'error'); return; }
+
+            addPoroto(); // Llamada para añadir el poroto
             mostrarNotificacion('Muy Bien, ¡te ganaste 1 poroto! 🥳');
             
             const { count } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', false);
@@ -822,6 +972,8 @@
         // --- MANEJO DE EVENTOS ---
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('footer-year').textContent = new Date().getFullYear();
+            
+            renderJarState(); // Cargar estado del frasco al iniciar
 
             checkUser();
             loginForm.addEventListener('submit', handleLogin);
