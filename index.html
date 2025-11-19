@@ -306,6 +306,7 @@
         async function mostrarTooltip(viaId, targetElement, status) { tooltipProblema.className = `tooltip-${status}`; const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single(); if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; } const rect = targetElement.getBoundingClientRect(); tooltipProblema.style.left = `${rect.left + window.scrollX}px`; tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`; tooltipProblema.classList.add('visible'); } function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
 
         // <<< NUEVO: Bloque de funciones para gestionar tareas predeterminadas >>>
+        console.log("Iniciando carga de tareas. Rol actual:", currentUserRole, "Es admin:", esAdmin());
         async function cargarYRenderizarTareasPredeterminadas() {
             if (!esAdmin()) return; // Solo los admins pueden ver esto
             presetTasksLoader.style.display = 'flex';
@@ -686,3 +687,4 @@
     </script>
 </body>
 </html>
+
