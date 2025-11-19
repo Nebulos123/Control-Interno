@@ -296,6 +296,7 @@
             
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
         let tareasPredeterminadas = []; // Array para almacenar las tareas
+        let tooltipTimer = null; // <<< MODIFICACIÓN CLAVE: Variable para el debouncer del tooltip >>>
 
         const esAdmin = () => currentUserRole === 'admin';
 
@@ -305,97 +306,17 @@
         // --- LÓGICA DE TOOLTIPS --- (Sin cambios)
         async function mostrarTooltip(viaId, targetElement, status) { tooltipProblema.className = `tooltip-${status}`; const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single(); if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; } const rect = targetElement.getBoundingClientRect(); tooltipProblema.style.left = `${rect.left + window.scrollX}px`; tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`; tooltipProblema.classList.add('visible'); } function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
 
-        // <<< NUEVO: Bloque de funciones para gestionar tareas predeterminadas >>>
-        async function cargarYRenderizarTareasPredeterminadas() {
-            // console.log("Iniciando carga de tareas. Rol actual:", currentUserRole, "Es admin:", esAdmin()); // Quitado para limpiar
-            if (!esAdmin()) return; // Solo los admins pueden ver esto
-            presetTasksLoader.style.display = 'flex';
-            presetTasksList.innerHTML = '';
-            try {
-                const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion').order('descripcion', { ascending: true });
-                if (error) throw error;
-                
-                tareasPredeterminadas = data; // Guardamos en el array global
-                
-                if (data.length === 0) {
-                    presetTasksList.innerHTML = '<li>No hay tareas predeterminadas.</li>';
-                } else {
-                    data.forEach(task => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `
-                            <span>${task.descripcion}</span>
-                            <button data-id="${task.id}" class="delete-preset-task">Eliminar</button>
-                        `;
-                        presetTasksList.appendChild(li);
-                    });
-                }
-            } catch (error) {
-                console.error("Error al cargar tareas predeterminadas:", error);
-                mostrarNotificacion("No se pudieron cargar las tareas predeterminadas.", "error");
-            } finally {
-                presetTasksLoader.style.display = 'none';
-            }
-        }
-
-        async function agregarTareaPredeterminada() {
-            const descripcion = newPresetTaskInput.value.trim();
-            if (!descripcion) {
-                mostrarNotificacion("La descripción no puede estar vacía.", "error");
-                return;
-            }
-            addPresetTaskButton.disabled = true;
-            try {
-                const { error } = await supabase.from('tareas_predeterminadas').insert([{ descripcion }]);
-                if (error) throw error;
-                
-                mostrarNotificacion("Tarea predeterminada agregada.", "success");
-                newPresetTaskInput.value = '';
-                await cargarYRenderizarTareasPredeterminadas(); // Refrescar la lista
-            } catch (error) {
-                console.error("Error al agregar tarea predeterminada:", error);
-                mostrarNotificacion("Error al guardar la tarea.", "error");
-            } finally {
-                addPresetTaskButton.disabled = false;
-            }
-        }
-
-        async function eliminarTareaPredeterminada(id) {
-            if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return;
-            
-            try {
-                const { error } = await supabase.from('tareas_predeterminadas').delete().eq('id', id);
-                if (error) throw error;
-                
-                mostrarNotificacion("Tarea predeterminada eliminada.", "success");
-                await cargarYRenderizarTareasPredeterminadas(); // Refrescar la lista
-            } catch (error) {
-                console.error("Error al eliminar tarea predeterminada:", error);
-                mostrarNotificacion("Error al eliminar la tarea.", "error");
-            }
-        }
+        // --- Bloque de funciones para gestionar tareas predeterminadas (Sin cambios) ---
+        async function cargarYRenderizarTareasPredeterminadas() { if (!esAdmin()) return; presetTasksLoader.style.display = 'flex'; presetTasksList.innerHTML = ''; try { const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion').order('descripcion', { ascending: true }); if (error) throw error; tareasPredeterminadas = data; if (data.length === 0) { presetTasksList.innerHTML = '<li>No hay tareas predeterminadas.</li>'; } else { data.forEach(task => { const li = document.createElement('li'); li.innerHTML = `<span>${task.descripcion}</span><button data-id="${task.id}" class="delete-preset-task">Eliminar</button>`; presetTasksList.appendChild(li); }); } } catch (error) { console.error("Error al cargar tareas predeterminadas:", error); mostrarNotificacion("No se pudieron cargar las tareas predeterminadas.", "error"); } finally { presetTasksLoader.style.display = 'none'; } }
+        async function agregarTareaPredeterminada() { const descripcion = newPresetTaskInput.value.trim(); if (!descripcion) { mostrarNotificacion("La descripción no puede estar vacía.", "error"); return; } addPresetTaskButton.disabled = true; try { const { error } = await supabase.from('tareas_predeterminadas').insert([{ descripcion }]); if (error) throw error; mostrarNotificacion("Tarea predeterminada agregada.", "success"); newPresetTaskInput.value = ''; await cargarYRenderizarTareasPredeterminadas(); } catch (error) { console.error("Error al agregar tarea predeterminada:", error); mostrarNotificacion("Error al guardar la tarea.", "error"); } finally { addPresetTaskButton.disabled = false; } }
+        async function eliminarTareaPredeterminada(id) { if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return; try { const { error } = await supabase.from('tareas_predeterminadas').delete().eq('id', id); if (error) throw error; mostrarNotificacion("Tarea predeterminada eliminada.", "success"); await cargarYRenderizarTareasPredeterminadas(); } catch (error) { console.error("Error al eliminar tarea predeterminada:", error); mostrarNotificacion("Error al eliminar la tarea.", "error"); } }
         
-        // <<< MODIFICACIÓN CLAVE: Nueva función para agrupar cargas >>>
-        async function inicializarPanelesYDatos() {
-            // Primero, siempre cargamos las vías
-            await cargarVias();
-
-            // Luego, gestionamos las tareas predeterminadas basándonos en el rol ya establecido
-            if (esAdmin()) {
-                adminTasksContainer.style.display = 'block';
-                // Esta función ahora se llama sabiendo que esAdmin() es true
-                await cargarYRenderizarTareasPredeterminadas(); 
-            } else {
-                // Si no es admin, ocultamos el panel y solo cargamos los datos para el select
-                adminTasksContainer.style.display = 'none';
-                const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion');
-                if (!error) {
-                    tareasPredeterminadas = data;
-                }
-            }
-        }
+        async function inicializarPanelesYDatos() { await cargarVias(); if (esAdmin()) { adminTasksContainer.style.display = 'block'; await cargarYRenderizarTareasPredeterminadas(); } else { adminTasksContainer.style.display = 'none'; const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion'); if (!error) { tareasPredeterminadas = data; } } }
 
 
         // --- LÓGICA PRINCIPAL ---
+
+        // <<< MODIFICACIÓN CLAVE: Función cargarVias() con Debouncer para el Tooltip >>>
         async function cargarVias() {
             document.querySelectorAll('.loader-container').forEach(loader => loader.style.display = 'flex');
             try {
@@ -415,10 +336,21 @@
                         barreraHTML = `<div class="barrera-info" title="Modelo: ${modeloTexto}"><svg class="barrera-icono" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><path d="M6 30 V 11 H 16 V 6 H 6 V 0 H 4 V 6 H 0 V 11 H 4 V 30 Z M 16 11 H 30 V 8 H 16 Z" fill="#d8dee9" stroke="none"></path></svg><span class="barrera-modelo-nombre">${modeloTexto}</span></div>`;
                     }
                     viaBox.innerHTML = `${via.numero_via}${barreraHTML}`;
+                    
                     if (via.status === 'problema' || via.status === 'revisar') {
-                        viaBox.addEventListener('mouseenter', () => mostrarTooltip(via.id, viaBox, via.status));
-                        viaBox.addEventListener('mouseleave', ocultarTooltip);
+                        viaBox.addEventListener('mouseenter', () => {
+                            clearTimeout(tooltipTimer);
+                            tooltipTimer = setTimeout(() => {
+                                mostrarTooltip(via.id, viaBox, via.status);
+                            }, 300); // Espera 300ms antes de mostrar
+                        });
+
+                        viaBox.addEventListener('mouseleave', () => {
+                            clearTimeout(tooltipTimer);
+                            ocultarTooltip();
+                        });
                     }
+                    
                     viaBox.addEventListener('click', () => mostrarModal(via));
                     const grupoId = via.numero_via <= 40 ? 'grupo-1-40' : via.numero_via <= 44 ? 'grupo-43-44' : via.numero_via <= 47 ? 'grupo-46-47' : 'grupo-50-51';
                     document.getElementById(grupoId).appendChild(viaBox);
@@ -480,76 +412,9 @@
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
         
-        // <<< MODIFICACIÓN CLAVE: handleLogin llama a la nueva función de inicialización >>>
-        const handleLogin = async (event) => {
-            event.preventDefault();
-            loginButton.disabled = true;
-            loginButton.textContent = 'Accediendo...';
-            loginError.style.display = 'none';
-            const email = document.getElementById('email').value, password = document.getElementById('password').value;
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-                if (profileError) throw profileError;
-
-                loginContainer.style.display = 'none';
-                mainContent.style.display = 'block';
-                currentUserEmail = data.user.email;
-                currentUserRole = profile.role || 'operator';
-                userEmailDisplay.textContent = currentUserEmail;
-                userRoleDisplay.textContent = currentUserRole;
-                
-                await inicializarPanelesYDatos(); // Llamada centralizada
-                escucharCambiosVias();
-
-            } catch (error) {
-                console.error('Error de login:', error.message);
-                loginError.style.display = 'block';
-                mostrarNotificacion('Usuario o contraseña incorrectos.', 'error');
-            } finally {
-                loginButton.disabled = false;
-                loginButton.textContent = 'Acceder';
-            }
-        };
-
-        // <<< MODIFICACIÓN CLAVE: checkUser llama a la nueva función de inicialización >>>
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-                if (profileError) { await handleLogout(); return; }
-
-                loginContainer.style.display = 'none';
-                mainContent.style.display = 'block';
-                currentUserEmail = session.user.email;
-                currentUserRole = profile.role || 'operator';
-                userEmailDisplay.textContent = currentUserEmail;
-                userRoleDisplay.textContent = currentUserRole;
-
-                await inicializarPanelesYDatos(); // Llamada centralizada
-                escucharCambiosVias();
-
-            } else {
-                loginContainer.style.display = 'block';
-                mainContent.style.display = 'none';
-            }
-        };
-
-        // handleLogout sin cambios, pero es parte del flujo de autenticación
-        const handleLogout = async () => {
-            if (canalVias) {
-                supabase.removeChannel(canalVias);
-                canalVias = null;
-            }
-            await supabase.auth.signOut();
-            mainContent.style.display = 'none';
-            loginContainer.style.display = 'block';
-            adminTasksContainer.style.display = 'none'; // Ocultar el panel de admin al salir
-            currentUserEmail = null;
-            currentUserRole = 'operator';
-        };
-
+        const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
+        const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
+        const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; adminTasksContainer.style.display = 'none'; currentUserEmail = null; currentUserRole = 'operator'; };
         function cerrarModal() { modal.style.display = 'none'; viaActualModal = null; }
         
         async function manejarSubmitNovedad(event) {
@@ -683,6 +548,3 @@
     </script>
 </body>
 </html>
-```
-
-
