@@ -50,24 +50,10 @@
         
         .grupo-vias { position: relative; background-color: rgba(67, 76, 94, 0.8); backdrop-filter: blur(5px); border: 1px solid #4c566a; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.2); }
         .grupo-vias h2 { margin-top: 0; margin-bottom: 20px; padding-bottom: 10px; color: #eceff4; font-size: 1.3em; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #5e81ac; }
-        /* [REVERTIDO] Vuelve al diseño de grilla original */
         .vias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 18px; }
 
-        /* [MODIFICADO] Se ajusta el via-box para contener la nueva información */
         .via-box { 
-            position: relative; 
-            border-radius: 8px; 
-            padding: 18px 5px 30px 5px; /* Aumentado el padding inferior para dar espacio al badge */
-            text-align: center; 
-            font-size: 1.5em; 
-            font-weight: bold; 
-            cursor: pointer; 
-            color: #2e3440; 
-            border: 1px solid rgba(0, 0, 0, 0.2); 
-            border-bottom: 4px solid rgba(0, 0, 0, 0.4); 
-            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3); 
-            transition: all 0.15s ease-out; 
-            box-sizing: border-box;
+            position: relative; border-radius: 8px; padding: 18px 5px 30px 5px; text-align: center; font-size: 1.5em; font-weight: bold; cursor: pointer; color: #2e3440; border: 1px solid rgba(0, 0, 0, 0.2); border-bottom: 4px solid rgba(0, 0, 0, 0.4); text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3); transition: all 0.15s ease-out; box-sizing: border-box;
         }
         .via-box:hover { transform: translateY(-4px); filter: brightness(1.1); border-bottom-width: 6px; }
         
@@ -75,38 +61,15 @@
         .status-revisar { background: linear-gradient(to bottom, #f0d899, #ebcb8b); }
         .status-problema { background: linear-gradient(to bottom, #c97c84, #bf616a); }
         
-        /* [NUEVO] Estilos para el badge de información de la barrera */
-        .barrera-info {
-            position: absolute;
-            bottom: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            background-color: rgba(46, 52, 64, 0.7);
-            padding: 2px 6px;
-            border-radius: 4px;
-            line-height: 1;
-        }
-        .barrera-info .barrera-icono {
-            width: 14px;
-            height: 14px;
-            fill: #d8dee9;
-        }
-        .barrera-info .barrera-modelo-nombre {
-            font-size: 9px;
-            color: #eceff4;
-            font-weight: normal;
-        }
+        .barrera-info { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; background-color: rgba(46, 52, 64, 0.7); padding: 2px 6px; border-radius: 4px; line-height: 1; }
+        .barrera-info .barrera-icono { width: 14px; height: 14px; fill: #d8dee9; }
+        .barrera-info .barrera-modelo-nombre { font-size: 9px; color: #eceff4; font-weight: normal; }
 
         .no-results-message { display: none; text-align: center; padding: 20px; font-style: italic; color: #d8dee9; }
         .grupos-secundarios-container { display: flex; gap: 25px; justify-content: space-between; margin-bottom: 25px; }
         .grupos-secundarios-container .grupo-vias { flex-grow: 1; margin-bottom: 0; }
         
-        #tooltip-problema {
-            position: absolute; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); transition: opacity 0.2s ease-in-out;
-        }
+        #tooltip-problema { position: absolute; padding: 10px 15px; border-radius: 6px; z-index: 1001; pointer-events: none; opacity: 0; font-size: 0.9em; max-width: 250px; text-align: left; box-shadow: 0 3px 8px rgba(0,0,0,0.3); transition: opacity 0.2s ease-in-out; }
         #tooltip-problema.visible { opacity: 1; }
         #tooltip-problema strong { display: block; margin-bottom: 5px; padding-bottom: 5px; }
         #tooltip-problema.tooltip-problema { background-color: #bf616a; color: #eceff4; }
@@ -193,6 +156,28 @@
         @keyframes jar-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-2deg); } 75% { transform: translateX(5px) rotate(2deg); } }
         .poroto-exit { animation: poroto-fade-out 0.5s ease-in forwards; }
         @keyframes poroto-fade-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0); } }
+
+        /* <!-- NUEVO: Estilos para panel de admin de tareas predeterminadas --> */
+        #preset-tasks-list li {
+            background-color: #4c566a;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #88c0d0;
+        }
+        #preset-tasks-list button {
+            background-color: #bf616a;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
     </style>
 </head>
 <body>
@@ -204,6 +189,22 @@
             <div class="dashboard-stats"><div class="stat-box" id="stat-problema"><h3>Con Problema</h3><div class="stat-number" id="stat-count-problema">0</div></div><div class="stat-box" id="stat-revisar"><h3>Para Revisar</h3><div class="stat-number" id="stat-count-revisar">0</div></div><div class="stat-box" id="stat-normal"><h3>Normales</h3><div class="stat-number" id="stat-count-normal">0</div></div></div>
             <div class="controles-vias"><input type="search" id="search-box" placeholder="Buscar por número de vía..."><div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div>
             <div class="busqueda-global-container"><div class="busqueda-global-input"><input type="search" id="global-search-box" placeholder="Buscar problema en todas las vías (ej: Contactor, Barrera...)"><button id="global-search-button">Buscar</button></div><div id="global-search-results-container" style="display: none;"><h3>Resultados de la Búsqueda</h3><div class="loader-container" id="global-search-loader" style="display: none;"><div class="spinner"></div></div><ul id="global-search-results-list"></ul><p id="no-global-results-message" style="display: none;">No se encontraron resultados para tu búsqueda.</p></div></div>
+            
+            <!-- NUEVO: Contenedor para gestión de tareas predeterminadas (solo para Admins) -->
+            <div id="admin-tasks-container" class="busqueda-global-container" style="display: none;">
+                <h3>Gestión de Tareas Predeterminadas</h3>
+                <div class="busqueda-global-input">
+                    <input type="text" id="new-preset-task-input" placeholder="Escribe una nueva tarea predeterminada...">
+                    <button id="add-preset-task-button">Agregar Tarea</button>
+                </div>
+                <div id="preset-tasks-list-container">
+                    <div class="loader-container" id="preset-tasks-loader" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <ul id="preset-tasks-list" style="list-style-type: none; padding: 0;"></ul>
+                </div>
+            </div>
+
             <div class="grupo-vias" id="container-1-40"><div class="loader-container"><div class="spinner"></div></div><h2>RICCHERI (Vías 1 - 40)</h2><div id="grupo-1-40" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div>
             <div class="grupos-secundarios-container"><div class="grupo-vias" id="container-43-44"><div class="loader-container"><div class="spinner"></div></div><h2>DONOVAN (Vías 43 - 44)</h2><div id="grupo-43-44" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-46-47"><div class="loader-container"><div class="spinner"></div></div><h2>BOULOGNE SUR MER (Vías 46 - 47)</h2><div id="grupo-46-47" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div><div class="grupo-vias" id="container-50-51"><div class="loader-container"><div class="spinner"></div></div><h2>MERCADO CENTRAL (Vías 50 - 51)</h2><div id="grupo-50-51" class="vias-grid"></div><p class="no-results-message">No se encontraron vías con los filtros aplicados.</p></div></div>
         </main>
@@ -224,7 +225,39 @@
                 </div>
                 <div style="display: flex; gap: 25px;">
                     <div class="tasks-section"><div class="modal-tabs"><button id="tab-pendientes" class="active">Pendientes</button><button id="tab-historial">Historial</button></div><div id="content-pendientes" class="tab-content active"><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-pendientes" style="list-style-type: none; padding: 0;"></ul></div></div><div id="content-historial" class="tab-content"><div class="historial-filtros"><input type="search" id="historial-search" placeholder="Buscar en el historial..."><input type="date" id="historial-date-picker"></div><div class="novedades-container"><div class="loader-container"><div class="spinner"></div></div><ul id="lista-historial" style="list-style-type: none; padding: 0;"></ul></div><div id="historial-pagination" class="pagination-controls"></div></div></div>
-                    <div class="form-section"><h3>Agregar Tarea</h3><form id="form-novedad"><input type="hidden" id="via-id-input"><label for="descripcion-novedad">Nueva Tarea:</label><textarea id="descripcion-novedad" rows="4" placeholder="Describir la tarea pendiente..."></textarea><label for="status-via">Estado de la Vía:</label><select id="status-via"><option value="normal">Normal (Verde)</option><option value="revisar">Revisar (Amarillo)</option><option value="problema">Problema (Rojo)</option></select><button type="submit">Guardar</button></form></div>
+                    
+                    <!-- <<< FORMULARIO MODIFICADO >>> -->
+                    <div class="form-section">
+                        <h3>Agregar Tarea</h3>
+                        <form id="form-novedad">
+                            <input type="hidden" id="via-id-input">
+                            
+                            <!-- NUEVO: Selector para tareas predeterminadas -->
+                            <label for="select-tarea-predeterminada">Elegir Tarea Predeterminada (Opcional):</label>
+                            <select id="select-tarea-predeterminada">
+                                <option value="">-- Escribir tarea manualmente --</option>
+                            </select>
+
+                            <label for="descripcion-novedad">Descripción de la Tarea:</label>
+                            <textarea id="descripcion-novedad" rows="4" placeholder="Describir la tarea pendiente..."></textarea>
+                            
+                            <label for="status-via">Estado de la Vía:</label>
+                            <select id="status-via">
+                                <option value="normal">Normal (Verde)</option>
+                                <option value="revisar">Revisar (Amarillo)</option>
+                                <option value="problema">Problema (Rojo)</option>
+                            </select>
+                            
+                            <!-- NUEVO: Checkbox para marcar como resuelta -->
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <input type="checkbox" id="marcar-resuelta-input" style="width: auto;">
+                                <label for="marcar-resuelta-input" style="margin-bottom: 0;">Marcar como resuelta inmediatamente</label>
+                            </div>
+
+                            <button type="submit">Guardar</button>
+                        </form>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -251,8 +284,18 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const loginContainer = document.getElementById('login-container'), mainContent = document.getElementById('main-content'), modal = document.getElementById('modal-via'), searchBox = document.getElementById('search-box'), filterButtons = document.querySelectorAll('.filter-buttons button'), tooltipProblema = document.getElementById('tooltip-problema'), loginForm = document.getElementById('login-form'), loginButton = document.getElementById('login-button'), loginError = document.getElementById('login-error'), logoutButton = document.getElementById('logout-button'), userEmailDisplay = document.getElementById('user-email-display'), userRoleDisplay = document.getElementById('user-role-display'), closeButton = document.querySelector('.close-button'), formNovedad = document.getElementById('form-novedad');
+        
+        // <<< NUEVO: Selectores para nuevas funcionalidades >>>
+        const adminTasksContainer = document.getElementById('admin-tasks-container'),
+              addPresetTaskButton = document.getElementById('add-preset-task-button'),
+              newPresetTaskInput = document.getElementById('new-preset-task-input'),
+              presetTasksList = document.getElementById('preset-tasks-list'),
+              presetTasksLoader = document.getElementById('preset-tasks-loader'),
+              selectTareaPredeterminada = document.getElementById('select-tarea-predeterminada'),
+              marcarResueltaInput = document.getElementById('marcar-resuelta-input');
             
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
+        let tareasPredeterminadas = []; // Array para almacenar las tareas
 
         const esAdmin = () => currentUserRole === 'admin';
 
@@ -261,6 +304,74 @@
 
         // --- LÓGICA DE TOOLTIPS --- (Sin cambios)
         async function mostrarTooltip(viaId, targetElement, status) { tooltipProblema.className = `tooltip-${status}`; const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single(); if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; } const rect = targetElement.getBoundingClientRect(); tooltipProblema.style.left = `${rect.left + window.scrollX}px`; tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`; tooltipProblema.classList.add('visible'); } function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
+
+        // <<< NUEVO: Bloque de funciones para gestionar tareas predeterminadas >>>
+        async function cargarYRenderizarTareasPredeterminadas() {
+            if (!esAdmin()) return; // Solo los admins pueden ver esto
+            presetTasksLoader.style.display = 'flex';
+            presetTasksList.innerHTML = '';
+            try {
+                const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion').order('descripcion', { ascending: true });
+                if (error) throw error;
+                
+                tareasPredeterminadas = data; // Guardamos en el array global
+                
+                if (data.length === 0) {
+                    presetTasksList.innerHTML = '<li>No hay tareas predeterminadas.</li>';
+                } else {
+                    data.forEach(task => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span>${task.descripcion}</span>
+                            <button data-id="${task.id}" class="delete-preset-task">Eliminar</button>
+                        `;
+                        presetTasksList.appendChild(li);
+                    });
+                }
+            } catch (error) {
+                console.error("Error al cargar tareas predeterminadas:", error);
+                mostrarNotificacion("No se pudieron cargar las tareas predeterminadas.", "error");
+            } finally {
+                presetTasksLoader.style.display = 'none';
+            }
+        }
+
+        async function agregarTareaPredeterminada() {
+            const descripcion = newPresetTaskInput.value.trim();
+            if (!descripcion) {
+                mostrarNotificacion("La descripción no puede estar vacía.", "error");
+                return;
+            }
+            addPresetTaskButton.disabled = true;
+            try {
+                const { error } = await supabase.from('tareas_predeterminadas').insert([{ descripcion }]);
+                if (error) throw error;
+                
+                mostrarNotificacion("Tarea predeterminada agregada.", "success");
+                newPresetTaskInput.value = '';
+                await cargarYRenderizarTareasPredeterminadas(); // Refrescar la lista
+            } catch (error) {
+                console.error("Error al agregar tarea predeterminada:", error);
+                mostrarNotificacion("Error al guardar la tarea.", "error");
+            } finally {
+                addPresetTaskButton.disabled = false;
+            }
+        }
+
+        async function eliminarTareaPredeterminada(id) {
+            if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return;
+            
+            try {
+                const { error } = await supabase.from('tareas_predeterminadas').delete().eq('id', id);
+                if (error) throw error;
+                
+                mostrarNotificacion("Tarea predeterminada eliminada.", "success");
+                await cargarYRenderizarTareasPredeterminadas(); // Refrescar la lista
+            } catch (error) {
+                console.error("Error al eliminar tarea predeterminada:", error);
+                mostrarNotificacion("Error al eliminar la tarea.", "error");
+            }
+        }
 
         // --- LÓGICA PRINCIPAL ---
         async function cargarVias() {
@@ -272,39 +383,21 @@
                 document.querySelectorAll('.vias-grid').forEach(g => g.innerHTML = '');
 
                 for (const via of vias) {
-                    // [REVERTIDO Y MEJORADO] Se vuelve a la estructura simple de via-box
                     const viaBox = document.createElement('div');
                     viaBox.className = `via-box status-${via.status}`;
                     viaBox.dataset.viaId = via.id;
                     viaBox.dataset.viaStatus = via.status;
-
                     const modeloTexto = via.modelo_barrera || '';
                     let barreraHTML = '';
-
-                    // Se crea el HTML del badge solo si hay un modelo
                     if(modeloTexto) {
-                        barreraHTML = `
-                            <div class="barrera-info" title="Modelo: ${modeloTexto}">
-                                <svg class="barrera-icono" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M6 30 V 11 H 16 V 6 H 6 V 0 H 4 V 6 H 0 V 11 H 4 V 30 Z M 16 11 H 30 V 8 H 16 Z" fill="#d8dee9" stroke="none"></path>
-                                </svg>
-                                <span class="barrera-modelo-nombre">${modeloTexto}</span>
-                            </div>
-                        `;
+                        barreraHTML = `<div class="barrera-info" title="Modelo: ${modeloTexto}"><svg class="barrera-icono" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><path d="M6 30 V 11 H 16 V 6 H 6 V 0 H 4 V 6 H 0 V 11 H 4 V 30 Z M 16 11 H 30 V 8 H 16 Z" fill="#d8dee9" stroke="none"></path></svg><span class="barrera-modelo-nombre">${modeloTexto}</span></div>`;
                     }
-                    
-                    viaBox.innerHTML = `
-                        ${via.numero_via}
-                        ${barreraHTML}
-                    `;
-                    
+                    viaBox.innerHTML = `${via.numero_via}${barreraHTML}`;
                     if (via.status === 'problema' || via.status === 'revisar') {
                         viaBox.addEventListener('mouseenter', () => mostrarTooltip(via.id, viaBox, via.status));
                         viaBox.addEventListener('mouseleave', ocultarTooltip);
                     }
-                    
                     viaBox.addEventListener('click', () => mostrarModal(via));
-
                     const grupoId = via.numero_via <= 40 ? 'grupo-1-40' : via.numero_via <= 44 ? 'grupo-43-44' : via.numero_via <= 47 ? 'grupo-46-47' : 'grupo-50-51';
                     document.getElementById(grupoId).appendChild(viaBox);
                 }
@@ -318,10 +411,43 @@
             }
         }
         
-        // --- (EL RESTO DEL CÓDIGO JAVASCRIPT ES IDÉNTICO AL ANTERIOR) ---
-        // --- FUNCIÓN DE BÚSQUEDA GLOBAL ---
         async function buscarProblemaGlobal() { const searchTerm = document.getElementById('global-search-box').value.trim(); const resultsContainer = document.getElementById('global-search-results-container'), resultsList = document.getElementById('global-search-results-list'), loader = document.getElementById('global-search-loader'), noResultsMessage = document.getElementById('no-global-results-message'); if (!searchTerm) { mostrarNotificacion('Por favor, ingresa un término de búsqueda.', 'error'); return; } resultsContainer.style.display = 'block'; loader.style.display = 'flex'; resultsList.innerHTML = ''; noResultsMessage.style.display = 'none'; try { const { data, error } = await supabase.from('novedades').select(`id, descripcion, created_at, resuelta, resolved_at, resolved_by, user_email, vias ( numero_via )`).ilike('descripcion', `%${searchTerm}%`).order('created_at', { ascending: false }); if (error) throw error; if (data.length > 0) { data.forEach(novedad => { const li = document.createElement('li'); const fechaCreacion = new Date(novedad.created_at).toLocaleString('es-AR'); let metaInfo = `<span class="resultado-meta"><span class="fecha">${fechaCreacion}</span> - Creado por ${novedad.user_email || 'Sistema'}</span>`; if(novedad.resuelta && novedad.resolved_at) { const fechaResolucion = new Date(novedad.resolved_at).toLocaleString('es-AR'); metaInfo += `<span class="resultado-meta">Resuelto por ${novedad.resolved_by} el ${fechaResolucion}</span>`; } li.innerHTML = `<div><span class="resultado-via-numero">Vía ${novedad.vias.numero_via}</span><span class="estado-tag ${novedad.resuelta ? 'resuelta' : ''}">${novedad.resuelta ? 'Resuelto' : 'Pendiente'}</span></div><p class="resultado-descripcion">${novedad.descripcion}</p>${metaInfo}`; resultsList.appendChild(li); }); } else { noResultsMessage.style.display = 'block'; } } catch (error) { console.error('Error en la búsqueda global:', error); mostrarNotificacion('Ocurrió un error al realizar la búsqueda.', 'error'); } finally { loader.style.display = 'none'; } }
-        async function mostrarModal(via) { viaActualModal = via; document.getElementById('modal-title').textContent = `Tareas y Novedades - Vía ${via.numero_via}`; document.getElementById('via-id-input').value = via.id; document.getElementById('status-via').value = via.status; document.getElementById('descripcion-novedad').value = ''; const barreraForm = document.getElementById('barrera-form-section'); if (esAdmin()) { barreraForm.style.display = 'block'; document.getElementById('modelo-barrera-input').value = via.modelo_barrera || ''; } else { barreraForm.style.display = 'none'; } document.getElementById('status-via').disabled = false; document.getElementById('tab-pendientes').click(); modal.style.display = 'block'; await cargarNovedadesModal(); }
+        
+        // <<< MODIFICADO: mostrarModal ahora carga las tareas predeterminadas >>>
+        async function mostrarModal(via) {
+            viaActualModal = via;
+            document.getElementById('modal-title').textContent = `Tareas y Novedades - Vía ${via.numero_via}`;
+            document.getElementById('via-id-input').value = via.id;
+            document.getElementById('status-via').value = via.status;
+            document.getElementById('descripcion-novedad').value = '';
+            marcarResueltaInput.checked = false; // Resetear el checkbox
+            selectTareaPredeterminada.value = ""; // Resetear el select
+
+            const barreraForm = document.getElementById('barrera-form-section');
+            if (esAdmin()) {
+                barreraForm.style.display = 'block';
+                document.getElementById('modelo-barrera-input').value = via.modelo_barrera || '';
+            } else {
+                barreraForm.style.display = 'none';
+            }
+
+            // Cargar tareas predeterminadas en el select
+            selectTareaPredeterminada.innerHTML = '<option value="">-- Escribir tarea manualmente --</option>';
+            if (tareasPredeterminadas.length > 0) {
+                tareasPredeterminadas.forEach(task => {
+                    const option = document.createElement('option');
+                    option.value = task.descripcion;
+                    option.textContent = task.descripcion;
+                    selectTareaPredeterminada.appendChild(option);
+                });
+            }
+            
+            document.getElementById('status-via').disabled = false;
+            document.getElementById('tab-pendientes').click();
+            modal.style.display = 'block';
+            await cargarNovedadesModal();
+        }
+
         async function guardarModeloBarrera() { const botonGuardar = document.getElementById('guardar-modelo-barrera'); const nuevoModelo = document.getElementById('modelo-barrera-input').value.trim(); if (!viaActualModal) return; botonGuardar.disabled = true; botonGuardar.textContent = 'Guardando...'; try { const { error } = await supabase.from('vias').update({ modelo_barrera: nuevoModelo }).eq('id', viaActualModal.id); if (error) throw error; viaActualModal.modelo_barrera = nuevoModelo; mostrarNotificacion('Modelo de barrera actualizado con éxito.', 'success'); } catch (error) { console.error('Error al guardar el modelo de la barrera:', error); mostrarNotificacion('No se pudo guardar el modelo de la barrera.', 'error'); } finally { botonGuardar.disabled = false; botonGuardar.textContent = 'Guardar Modelo'; } }
         async function cargarNovedadesModal(historialPage = 1) { const listaPendientes = document.getElementById('lista-pendientes'), listaHistorial = document.getElementById('lista-historial'), loaders = document.querySelectorAll('.novedades-container .loader-container'); loaders.forEach(l => l.style.display = 'flex'); listaPendientes.innerHTML = ''; listaHistorial.innerHTML = ''; try { const { data: pendientes, error: errPend } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', false).order('created_at', { ascending: true }); if (errPend) throw errPend; if (pendientes.length > 0) { pendientes.forEach(n => listaPendientes.appendChild(crearItemNovedad(n, false))); } else { listaPendientes.innerHTML = '<li>No hay tareas pendientes.</li>'; } const NOVEDADES_PER_PAGE = 5, from = (historialPage - 1) * NOVEDADES_PER_PAGE, to = from + NOVEDADES_PER_PAGE - 1, textoBusqueda = document.getElementById('historial-search').value.trim(), fechaSeleccionada = document.getElementById('historial-date-picker').value; let queryHistorial = supabase.from('novedades').select('*', { count: 'exact' }).eq('via_id', viaActualModal.id).eq('resuelta', true); if (textoBusqueda) queryHistorial = queryHistorial.ilike('descripcion', `%${textoBusqueda}%`); if (fechaSeleccionada) { const fechaInicio = `${fechaSeleccionada}T00:00:00`, fechaFin = `${fechaSeleccionada}T23:59:59`; queryHistorial = queryHistorial.gte('created_at', fechaInicio).lte('created_at', fechaFin); } const { data: resueltas, count, error: errRes } = await queryHistorial.order('created_at', { ascending: false }).range(from, to); if (errRes) throw errRes; if (resueltas.length > 0) { resueltas.forEach(n => listaHistorial.appendChild(crearItemNovedad(n, true))); } else { listaHistorial.innerHTML = '<li>No hay historial de tareas resueltas.</li>'; } renderizarControlesPaginacion(historialPage, count, NOVEDADES_PER_PAGE); } catch (error) { console.error("Error cargando novedades:", error); mostrarNotificacion('Error al cargar las tareas.', 'error'); } finally { loaders.forEach(l => l.style.display = 'none'); } }
         function crearItemNovedad(novedad, esResuelta) { const item = document.createElement('li'); item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente'; item.dataset.novedadId = novedad.id; const fechaCreacion = new Date(novedad.created_at).toLocaleString('es-AR'); let infoAuditoria = ''; if (esResuelta && novedad.resolved_at && novedad.resolved_by) { const fechaResolucion = new Date(novedad.resolved_at).toLocaleString('es-AR'); infoAuditoria = `<span class="meta-info resuelta-info">Resuelta por ${novedad.resolved_by} el ${fechaResolucion}</span>`; } let botonesAccion = ''; const puedeEditar = esAdmin() || novedad.user_email === currentUserEmail; if (!esResuelta) { botonesAccion += `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>`; } if (puedeEditar) { botonesAccion += `<button class="btn-editar" title="Editar">✏️</button>`; } if (esAdmin()) { botonesAccion += `<button class="btn-eliminar" title="Eliminar">🗑️</button>`; } item.innerHTML = `<div class="novedad-contenido"><span class="meta-info">Creada por ${novedad.user_email || 'Sistema'} el ${fechaCreacion}</span>${infoAuditoria}<p class="descripcion-texto">${novedad.descripcion}</p></div><div class="novedad-acciones">${botonesAccion}</div>`; return item; }
@@ -332,20 +458,169 @@
         function mostrarNotificacion(mensaje, tipo = 'success') { const container = document.getElementById('toast-container'), toast = document.createElement('div'); toast.className = `toast ${tipo}`; toast.textContent = mensaje; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 100); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000); }
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
-        const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await cargarVias(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
-        const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await cargarVias(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
-        const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; currentUserEmail = null; currentUserRole = 'operator'; };
+        
+        // <<< MODIFICADO: handleLogin para mostrar panel de admin y cargar tareas >>>
+        const handleLogin = async (event) => {
+            event.preventDefault();
+            loginButton.disabled = true;
+            loginButton.textContent = 'Accediendo...';
+            loginError.style.display = 'none';
+            const email = document.getElementById('email').value, password = document.getElementById('password').value;
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+                if (profileError) throw profileError;
+
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                currentUserEmail = data.user.email;
+                currentUserRole = profile.role || 'operator';
+                userEmailDisplay.textContent = currentUserEmail;
+                userRoleDisplay.textContent = currentUserRole;
+                
+                // Mostrar panel de admin y cargar tareas predeterminadas
+                if (esAdmin()) {
+                    adminTasksContainer.style.display = 'block';
+                    await cargarYRenderizarTareasPredeterminadas();
+                } else { // Si no es admin, cargar solo las tareas para el select
+                    const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion');
+                    if(!error) tareasPredeterminadas = data;
+                }
+
+                await cargarVias();
+                escucharCambiosVias();
+            } catch (error) {
+                console.error('Error de login:', error.message);
+                loginError.style.display = 'block';
+                mostrarNotificacion('Usuario o contraseña incorrectos.', 'error');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Acceder';
+            }
+        };
+
+        // <<< MODIFICADO: checkUser para mostrar panel de admin y cargar tareas >>>
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+                if (profileError) { await handleLogout(); return; }
+
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                currentUserEmail = session.user.email;
+                currentUserRole = profile.role || 'operator';
+                userEmailDisplay.textContent = currentUserEmail;
+                userRoleDisplay.textContent = currentUserRole;
+
+                // Mostrar panel de admin y cargar tareas predeterminadas
+                if (esAdmin()) {
+                    adminTasksContainer.style.display = 'block';
+                    await cargarYRenderizarTareasPredeterminadas();
+                } else { // Si no es admin, cargar solo las tareas para el select
+                    const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion');
+                    if(!error) tareasPredeterminadas = data;
+                }
+                
+                await cargarVias();
+                escucharCambiosVias();
+            } else {
+                loginContainer.style.display = 'block';
+                mainContent.style.display = 'none';
+            }
+        };
+
+        // <<< MODIFICADO: handleLogout para ocultar el panel de admin >>>
+        const handleLogout = async () => {
+            if (canalVias) {
+                supabase.removeChannel(canalVias);
+                canalVias = null;
+            }
+            await supabase.auth.signOut();
+            mainContent.style.display = 'none';
+            loginContainer.style.display = 'block';
+            adminTasksContainer.style.display = 'none'; // Ocultar el panel de admin al salir
+            currentUserEmail = null;
+            currentUserRole = 'operator';
+        };
+
         function cerrarModal() { modal.style.display = 'none'; viaActualModal = null; }
-        async function manejarSubmitNovedad(event) { event.preventDefault(); const submitButton = event.target.querySelector('button[type="submit"]'); submitButton.disabled = true; submitButton.textContent = 'Guardando...'; try { const idVia = document.getElementById('via-id-input').value, nuevaDescripcion = document.getElementById('descripcion-novedad').value.trim(), nuevoStatus = document.getElementById('status-via').value; if (!nuevaDescripcion) { mostrarNotificacion('La descripción de la tarea no puede estar vacía.', 'error'); return; } const { data: { user } } = await supabase.auth.getUser(); if (!user) { mostrarNotificacion('Sesión expirada.', 'error'); return; } const { error: insertError } = await supabase.from('novedades').insert([{ via_id: idVia, descripcion: nuevaDescripcion, user_email: user.email, resuelta: false }]); if (insertError) throw insertError; if (nuevoStatus !== viaActualModal.status) { const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia); if (updateError) throw updateError; await cargarVias(); } mostrarNotificacion('Tarea agregada con éxito!'); await cargarNovedadesModal(); document.getElementById('descripcion-novedad').value = ''; } catch (error) { console.error('Error al guardar:', error); mostrarNotificacion('Error al guardar la tarea.', 'error'); } finally { submitButton.disabled = false; submitButton.textContent = 'Guardar'; } }
+        
+        // <<< MODIFICADO: manejarSubmitNovedad con la nueva lógica >>>
+        async function manejarSubmitNovedad(event) {
+            event.preventDefault();
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Guardando...';
+
+            try {
+                const idVia = document.getElementById('via-id-input').value;
+                const nuevaDescripcion = document.getElementById('descripcion-novedad').value.trim();
+                const nuevoStatus = document.getElementById('status-via').value;
+                const marcarComoResuelta = marcarResueltaInput.checked;
+
+                if (!nuevaDescripcion) {
+                    mostrarNotificacion('La descripción de la tarea no puede estar vacía.', 'error');
+                    return;
+                }
+
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    mostrarNotificacion('Sesión expirada.', 'error');
+                    return;
+                }
+
+                // Preparamos el payload dinámicamente
+                const insertPayload = {
+                    via_id: idVia,
+                    descripcion: nuevaDescripcion,
+                    user_email: user.email,
+                    resuelta: marcarComoResuelta // Usamos el valor del checkbox
+                };
+
+                if (marcarComoResuelta) {
+                    insertPayload.resolved_at = new Date().toISOString();
+                    insertPayload.resolved_by = user.email;
+                }
+
+                const { error: insertError } = await supabase.from('novedades').insert([insertPayload]);
+                if (insertError) throw insertError;
+                
+                // Lógica de notificación y porotos
+                if (marcarComoResuelta) {
+                    addPoroto();
+                    mostrarNotificacion('Tarea agregada y resuelta. ¡Te ganaste 1 poroto! 🥳');
+                } else {
+                    mostrarNotificacion('Tarea agregada con éxito!');
+                }
+
+                if (nuevoStatus !== viaActualModal.status) {
+                    const { error: updateError } = await supabase.from('vias').update({ status: nuevoStatus }).eq('id', idVia);
+                    if (updateError) throw updateError;
+                    await cargarVias();
+                }
+                
+                await cargarNovedadesModal();
+                document.getElementById('descripcion-novedad').value = '';
+                marcarResueltaInput.checked = false; // Resetear checkbox
+                selectTareaPredeterminada.value = ""; // Resetear select
+
+            } catch (error) {
+                console.error('Error al guardar:', error);
+                mostrarNotificacion('Error al guardar la tarea.', 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Guardar';
+            }
+        }
         
         function filtrarVias() {
             const textoBusqueda = searchBox.value.toLowerCase();
             document.querySelectorAll('.grupo-vias').forEach(grupo => {
                 let viasVisibles = 0;
-                // [REVERTIDO] Se vuelve a buscar por .via-box
                 const viasEnGrupo = grupo.querySelectorAll('.via-box');
                 viasEnGrupo.forEach(via => {
-                    // El textContent ahora incluye el modelo, por lo que la búsqueda es más potente
                     const coincideBusqueda = via.textContent.toLowerCase().includes(textoBusqueda);
                     const coincideFiltro = (filtroActivo === 'todos') || (via.dataset.viaStatus === filtroActivo);
                     if (coincideBusqueda && coincideFiltro) {
@@ -359,10 +634,55 @@
                 mensajeVacio.style.display = viasVisibles === 0 ? 'block' : 'none';
             })
         }
-        function escucharCambiosVias() { if (canalVias) return; canalVias = supabase.channel('cambios-db-vias').on('postgres_changes', { event: '*', schema: 'public' }, (payload) => { if (payload.table === 'vias' || payload.table === 'novedades') { console.log('Cambio detectado por el listener:', payload.table); cargarVias(); if (modal.style.display === 'block' && viaActualModal) { cargarNovedadesModal(); } } }).subscribe(); }
-        document.addEventListener('DOMContentLoaded', () => { document.getElementById('footer-year').textContent = new Date().getFullYear(); renderJarState(); checkUser(); loginForm.addEventListener('submit', handleLogin); logoutButton.addEventListener('click', handleLogout); closeButton.addEventListener('click', cerrarModal); window.addEventListener('click', (event) => { if (event.target == modal) { cerrarModal(); } }); formNovedad.addEventListener('submit', manejarSubmitNovedad); searchBox.addEventListener('input', filtrarVias); filterButtons.forEach(button => { button.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); filtroActivo = button.id.replace('filter-', ''); filtrarVias(); }); }); document.getElementById('tab-pendientes').addEventListener('click', (e) => { document.getElementById('content-pendientes').classList.add('active'); document.getElementById('content-historial').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-historial').classList.remove('active'); }); document.getElementById('tab-historial').addEventListener('click', (e) => { document.getElementById('content-historial').classList.add('active'); document.getElementById('content-pendientes').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-pendientes').classList.remove('active'); }); document.getElementById('historial-search').addEventListener('input', () => cargarNovedadesModal(1)); document.getElementById('historial-date-picker').addEventListener('change', () => cargarNovedadesModal(1)); const globalSearchButton = document.getElementById('global-search-button'), globalSearchBox = document.getElementById('global-search-box'); globalSearchButton.addEventListener('click', buscarProblemaGlobal); globalSearchBox.addEventListener('keyup', (event) => { if (event.key === 'Enter') { buscarProblemaGlobal(); } }); globalSearchBox.addEventListener('input', () => { if (globalSearchBox.value.trim() === '') { document.getElementById('global-search-results-container').style.display = 'none'; } }); document.getElementById('guardar-modelo-barrera').addEventListener('click', guardarModeloBarrera); document.querySelector('.tasks-section').addEventListener('click', async (e) => { const target = e.target, itemLi = target.closest('li'); if (!itemLi) return; const novedadId = itemLi.dataset.novedadId; if (target.classList.contains('btn-resolver')) { if (confirm("¿Marcar esta tarea como resuelta?")) { await resolverNovedad(novedadId); } } else if (target.classList.contains('btn-eliminar')) { await manejarEliminarNovedad(novedadId); } else if (target.classList.contains('btn-editar')) { mostrarEditorNovedad(itemLi); } else if (target.classList.contains('btn-guardar-edicion')) { await guardarEdicionNovedad(itemLi, novedadId); } else if (target.classList.contains('btn-cancelar-edicion')) { await cargarNovedadesModal(); } }); });
+
+        function escucharCambiosVias() { if (canalVias) return; canalVias = supabase.channel('cambios-db-vias').on('postgres_changes', { event: '*', schema: 'public' }, (payload) => { console.log('Cambio detectado por el listener:', payload.table); if (payload.table === 'vias' || payload.table === 'novedades') { cargarVias(); if (modal.style.display === 'block' && viaActualModal) { cargarNovedadesModal(); } } if (payload.table === 'tareas_predeterminadas' && esAdmin()) { cargarYRenderizarTareasPredeterminadas(); } }).subscribe(); }
+        
+        document.addEventListener('DOMContentLoaded', () => { 
+            document.getElementById('footer-year').textContent = new Date().getFullYear(); 
+            renderJarState(); 
+            checkUser(); 
+            loginForm.addEventListener('submit', handleLogin); 
+            logoutButton.addEventListener('click', handleLogout); 
+            closeButton.addEventListener('click', cerrarModal); 
+            window.addEventListener('click', (event) => { if (event.target == modal) { cerrarModal(); } }); 
+            formNovedad.addEventListener('submit', manejarSubmitNovedad); 
+            searchBox.addEventListener('input', filtrarVias); 
+            filterButtons.forEach(button => { button.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); filtroActivo = button.id.replace('filter-', ''); filtrarVias(); }); }); 
+            document.getElementById('tab-pendientes').addEventListener('click', (e) => { document.getElementById('content-pendientes').classList.add('active'); document.getElementById('content-historial').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-historial').classList.remove('active'); }); 
+            document.getElementById('tab-historial').addEventListener('click', (e) => { document.getElementById('content-historial').classList.add('active'); document.getElementById('content-pendientes').classList.remove('active'); e.target.classList.add('active'); document.getElementById('tab-pendientes').classList.remove('active'); }); 
+            document.getElementById('historial-search').addEventListener('input', () => cargarNovedadesModal(1)); 
+            document.getElementById('historial-date-picker').addEventListener('change', () => cargarNovedadesModal(1)); 
+            const globalSearchButton = document.getElementById('global-search-button'), globalSearchBox = document.getElementById('global-search-box'); 
+            globalSearchButton.addEventListener('click', buscarProblemaGlobal); 
+            globalSearchBox.addEventListener('keyup', (event) => { if (event.key === 'Enter') { buscarProblemaGlobal(); } }); 
+            globalSearchBox.addEventListener('input', () => { if (globalSearchBox.value.trim() === '') { document.getElementById('global-search-results-container').style.display = 'none'; } }); 
+            document.getElementById('guardar-modelo-barrera').addEventListener('click', guardarModeloBarrera); 
+            document.querySelector('.tasks-section').addEventListener('click', async (e) => { const target = e.target, itemLi = target.closest('li'); if (!itemLi) return; const novedadId = itemLi.dataset.novedadId; if (target.classList.contains('btn-resolver')) { if (confirm("¿Marcar esta tarea como resuelta?")) { await resolverNovedad(novedadId); } } else if (target.classList.contains('btn-eliminar')) { await manejarEliminarNovedad(novedadId); } else if (target.classList.contains('btn-editar')) { mostrarEditorNovedad(itemLi); } else if (target.classList.contains('btn-guardar-edicion')) { await guardarEdicionNovedad(itemLi, novedadId); } else if (target.classList.contains('btn-cancelar-edicion')) { await cargarNovedadesModal(); } });
+
+            // <<< NUEVO: Listeners para las nuevas funcionalidades >>>
+            // Listener para el select de tareas predeterminadas
+            selectTareaPredeterminada.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    document.getElementById('descripcion-novedad').value = e.target.value;
+                }
+            });
+
+            // Listeners para el panel de admin
+            addPresetTaskButton.addEventListener('click', agregarTareaPredeterminada);
+            newPresetTaskInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    agregarTareaPredeterminada();
+                }
+            });
+
+            // Usamos delegación de eventos para los botones de eliminar
+            presetTasksList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-preset-task')) {
+                    const id = e.target.dataset.id;
+                    eliminarTareaPredeterminada(id);
+                }
+            });
+        });
     </script>
 </body>
 </html>
-
-
