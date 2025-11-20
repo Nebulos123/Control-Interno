@@ -157,34 +157,9 @@
         .poroto-exit { animation: poroto-fade-out 0.5s ease-in forwards; }
         @keyframes poroto-fade-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0); } }
 
-        /* <<< MODIFICACIÓN CLAVE: Estilos para el scroll del panel de admin >>> */
-        #preset-tasks-list {
-            max-height: 250px; /* Altura máxima antes de que aparezca el scroll */
-            overflow-y: auto;  /* Muestra el scroll vertical solo si es necesario */
-            padding-right: 10px; /* Espacio para que el scroll no tape el contenido */
-            list-style-type: none; /* Mantenemos tus estilos originales */
-            padding-left: 0;       /* Mantenemos tus estilos originales */
-        }
-        #preset-tasks-list li {
-            background-color: #4c566a;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid #88c0d0;
-        }
-        #preset-tasks-list button {
-            background-color: #bf616a;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
+        #preset-tasks-list { max-height: 250px; overflow-y: auto; padding-right: 10px; list-style-type: none; padding-left: 0; }
+        #preset-tasks-list li { background-color: #4c566a; padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #88c0d0; }
+        #preset-tasks-list button { background-color: #bf616a; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -197,7 +172,6 @@
             <div class="controles-vias"><input type="search" id="search-box" placeholder="Buscar por número de vía..."><div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div>
             <div class="busqueda-global-container"><div class="busqueda-global-input"><input type="search" id="global-search-box" placeholder="Buscar problema en todas las vías (ej: Contactor, Barrera...)"><button id="global-search-button">Buscar</button></div><div id="global-search-results-container" style="display: none;"><h3>Resultados de la Búsqueda</h3><div class="loader-container" id="global-search-loader" style="display: none;"><div class="spinner"></div></div><ul id="global-search-results-list"></ul><p id="no-global-results-message" style="display: none;">No se encontraron resultados para tu búsqueda.</p></div></div>
             
-            <!-- Contenedor para gestión de tareas predeterminadas -->
             <div id="admin-tasks-container" class="busqueda-global-container" style="display: none;">
                 <h3>Gestión de Tareas Predeterminadas</h3>
                 <div class="busqueda-global-input">
@@ -261,7 +235,6 @@
                             <button type="submit">Guardar</button>
                         </form>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -309,48 +282,14 @@
         // --- LÓGICA DE TOOLTIPS --- (Sin cambios)
         async function mostrarTooltip(viaId, targetElement, status) { tooltipProblema.className = `tooltip-${status}`; const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single(); if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; } const rect = targetElement.getBoundingClientRect(); tooltipProblema.style.left = `${rect.left + window.scrollX}px`; tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`; tooltipProblema.classList.add('visible'); } function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
 
-        // --- Bloque de funciones para gestionar tareas predeterminadas ---
-        
+        // --- Bloque de funciones para gestionar tareas predeterminadas --- (Sin cambios)
         async function cargarYRenderizarTareasPredeterminadas() { if (!esAdmin()) return; presetTasksLoader.style.display = 'flex'; presetTasksList.innerHTML = ''; try { const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion').order('descripcion', { ascending: true }); if (error) throw error; tareasPredeterminadas = data; if (data.length === 0) { presetTasksList.innerHTML = '<li>No hay tareas predeterminadas.</li>'; } else { data.forEach(task => { const li = document.createElement('li'); li.innerHTML = `<span>${task.descripcion}</span><button data-id="${task.id}" class="delete-preset-task">Eliminar</button>`; presetTasksList.appendChild(li); }); } } catch (error) { console.error("Error al cargar tareas predeterminadas:", error); mostrarNotificacion("No se pudieron cargar las tareas predeterminadas.", "error"); } finally { presetTasksLoader.style.display = 'none'; } }
-        
-        async function agregarTareaPredeterminada() {
-            const descripcion = newPresetTaskInput.value.trim();
-            if (!descripcion) {
-                mostrarNotificacion("La descripción no puede estar vacía.", "error");
-                return;
-            }
-            addPresetTaskButton.disabled = true;
-            try {
-                const { error } = await supabase.from('tareas_predeterminadas').insert([{ descripcion }]);
-                if (error) throw error;
-                mostrarNotificacion("Tarea predeterminada agregada.", "success");
-                newPresetTaskInput.value = '';
-                // No hay refresco manual, el listener se encargará
-            } catch (error) {
-                console.error("Error al agregar tarea predeterminada:", error);
-                mostrarNotificacion("Error al guardar la tarea.", "error");
-            } finally {
-                addPresetTaskButton.disabled = false;
-            }
-        }
-        
-        async function eliminarTareaPredeterminada(id) {
-            if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return;
-            try {
-                const { error } = await supabase.from('tareas_predeterminadas').delete().eq('id', id);
-                if (error) throw error;
-                mostrarNotificacion("Tarea predeterminada eliminada.", "success");
-                // No hay refresco manual, el listener se encargará
-            } catch (error) {
-                console.error("Error al eliminar tarea predeterminada:", error);
-                mostrarNotificacion("Error al eliminar la tarea.", "error");
-            }
-        }
-        
+        async function agregarTareaPredeterminada() { const descripcion = newPresetTaskInput.value.trim(); if (!descripcion) { mostrarNotificacion("La descripción no puede estar vacía.", "error"); return; } addPresetTaskButton.disabled = true; try { const { error } = await supabase.from('tareas_predeterminadas').insert([{ descripcion }]); if (error) throw error; mostrarNotificacion("Tarea predeterminada agregada.", "success"); newPresetTaskInput.value = ''; } catch (error) { console.error("Error al agregar tarea predeterminada:", error); mostrarNotificacion("Error al guardar la tarea.", "error"); } finally { addPresetTaskButton.disabled = false; } }
+        async function eliminarTareaPredeterminada(id) { if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return; try { const { error } = await supabase.from('tareas_predeterminadas').delete().eq('id', id); if (error) throw error; mostrarNotificacion("Tarea predeterminada eliminada.", "success"); } catch (error) { console.error("Error al eliminar tarea predeterminada:", error); mostrarNotificacion("Error al eliminar la tarea.", "error"); } }
         async function inicializarPanelesYDatos() { await cargarVias(); if (esAdmin()) { adminTasksContainer.style.display = 'block'; await cargarYRenderizarTareasPredeterminadas(); } else { adminTasksContainer.style.display = 'none'; const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion'); if (!error) { tareasPredeterminadas = data; } } }
 
 
-        // --- LÓGICA PRINCIPAL ---
+        // --- LÓGICA PRINCIPAL --- (Sin cambios)
         async function cargarVias() {
             document.querySelectorAll('.loader-container').forEach(loader => loader.style.display = 'flex');
             try {
@@ -398,9 +337,7 @@
                 document.querySelectorAll('.grupo-vias .loader-container').forEach(loader => loader.style.display = 'none');
             }
         }
-        
         async function buscarProblemaGlobal() { const searchTerm = document.getElementById('global-search-box').value.trim(); const resultsContainer = document.getElementById('global-search-results-container'), resultsList = document.getElementById('global-search-results-list'), loader = document.getElementById('global-search-loader'), noResultsMessage = document.getElementById('no-global-results-message'); if (!searchTerm) { mostrarNotificacion('Por favor, ingresa un término de búsqueda.', 'error'); return; } resultsContainer.style.display = 'block'; loader.style.display = 'flex'; resultsList.innerHTML = ''; noResultsMessage.style.display = 'none'; try { const { data, error } = await supabase.from('novedades').select(`id, descripcion, created_at, resuelta, resolved_at, resolved_by, user_email, vias ( numero_via )`).ilike('descripcion', `%${searchTerm}%`).order('created_at', { ascending: false }); if (error) throw error; if (data.length > 0) { data.forEach(novedad => { const li = document.createElement('li'); const fechaCreacion = new Date(novedad.created_at).toLocaleString('es-AR'); let metaInfo = `<span class="resultado-meta"><span class="fecha">${fechaCreacion}</span> - Creado por ${novedad.user_email || 'Sistema'}</span>`; if(novedad.resuelta && novedad.resolved_at) { const fechaResolucion = new Date(novedad.resolved_at).toLocaleString('es-AR'); metaInfo += `<span class="resultado-meta">Resuelto por ${novedad.resolved_by} el ${fechaResolucion}</span>`; } li.innerHTML = `<div><span class="resultado-via-numero">Vía ${novedad.vias.numero_via}</span><span class="estado-tag ${novedad.resuelta ? 'resuelta' : ''}">${novedad.resuelta ? 'Resuelto' : 'Pendiente'}</span></div><p class="resultado-descripcion">${novedad.descripcion}</p>${metaInfo}`; resultsList.appendChild(li); }); } else { noResultsMessage.style.display = 'block'; } } catch (error) { console.error('Error en la búsqueda global:', error); mostrarNotificacion('Ocurrió un error al realizar la búsqueda.', 'error'); } finally { loader.style.display = 'none'; } }
-        
         async function mostrarModal(via) {
             viaActualModal = via;
             document.getElementById('modal-title').textContent = `Tareas y Novedades - Vía ${via.numero_via}`;
@@ -433,7 +370,6 @@
             modal.style.display = 'block';
             await cargarNovedadesModal();
         }
-
         async function guardarModeloBarrera() { const botonGuardar = document.getElementById('guardar-modelo-barrera'); const nuevoModelo = document.getElementById('modelo-barrera-input').value.trim(); if (!viaActualModal) return; botonGuardar.disabled = true; botonGuardar.textContent = 'Guardando...'; try { const { error } = await supabase.from('vias').update({ modelo_barrera: nuevoModelo }).eq('id', viaActualModal.id); if (error) throw error; viaActualModal.modelo_barrera = nuevoModelo; mostrarNotificacion('Modelo de barrera actualizado con éxito.', 'success'); } catch (error) { console.error('Error al guardar el modelo de la barrera:', error); mostrarNotificacion('No se pudo guardar el modelo de la barrera.', 'error'); } finally { botonGuardar.disabled = false; botonGuardar.textContent = 'Guardar Modelo'; } }
         async function cargarNovedadesModal(historialPage = 1) { const listaPendientes = document.getElementById('lista-pendientes'), listaHistorial = document.getElementById('lista-historial'), loaders = document.querySelectorAll('.novedades-container .loader-container'); loaders.forEach(l => l.style.display = 'flex'); listaPendientes.innerHTML = ''; listaHistorial.innerHTML = ''; try { const { data: pendientes, error: errPend } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', false).order('created_at', { ascending: true }); if (errPend) throw errPend; if (pendientes.length > 0) { pendientes.forEach(n => listaPendientes.appendChild(crearItemNovedad(n, false))); } else { listaPendientes.innerHTML = '<li>No hay tareas pendientes.</li>'; } const NOVEDADES_PER_PAGE = 5, from = (historialPage - 1) * NOVEDADES_PER_PAGE, to = from + NOVEDADES_PER_PAGE - 1, textoBusqueda = document.getElementById('historial-search').value.trim(), fechaSeleccionada = document.getElementById('historial-date-picker').value; let queryHistorial = supabase.from('novedades').select('*', { count: 'exact' }).eq('via_id', viaActualModal.id).eq('resuelta', true); if (textoBusqueda) queryHistorial = queryHistorial.ilike('descripcion', `%${textoBusqueda}%`); if (fechaSeleccionada) { const fechaInicio = `${fechaSeleccionada}T00:00:00`, fechaFin = `${fechaSeleccionada}T23:59:59`; queryHistorial = queryHistorial.gte('created_at', fechaInicio).lte('created_at', fechaFin); } const { data: resueltas, count, error: errRes } = await queryHistorial.order('created_at', { ascending: false }).range(from, to); if (errRes) throw errRes; if (resueltas.length > 0) { resueltas.forEach(n => listaHistorial.appendChild(crearItemNovedad(n, true))); } else { listaHistorial.innerHTML = '<li>No hay historial de tareas resueltas.</li>'; } renderizarControlesPaginacion(historialPage, count, NOVEDADES_PER_PAGE); } catch (error) { console.error("Error cargando novedades:", error); mostrarNotificacion('Error al cargar las tareas.', 'error'); } finally { loaders.forEach(l => l.style.display = 'none'); } }
         function crearItemNovedad(novedad, esResuelta) { const item = document.createElement('li'); item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente'; item.dataset.novedadId = novedad.id; const fechaCreacion = new Date(novedad.created_at).toLocaleString('es-AR'); let infoAuditoria = ''; if (esResuelta && novedad.resolved_at && novedad.resolved_by) { const fechaResolucion = new Date(novedad.resolved_at).toLocaleString('es-AR'); infoAuditoria = `<span class="meta-info resuelta-info">Resuelta por ${novedad.resolved_by} el ${fechaResolucion}</span>`; } let botonesAccion = ''; const puedeEditar = esAdmin() || novedad.user_email === currentUserEmail; if (!esResuelta) { botonesAccion += `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>`; } if (puedeEditar) { botonesAccion += `<button class="btn-editar" title="Editar">✏️</button>`; } if (esAdmin()) { botonesAccion += `<button class="btn-eliminar" title="Eliminar">🗑️</button>`; } item.innerHTML = `<div class="novedad-contenido"><span class="meta-info">Creada por ${novedad.user_email || 'Sistema'} el ${fechaCreacion}</span>${infoAuditoria}<p class="descripcion-texto">${novedad.descripcion}</p></div><div class="novedad-acciones">${botonesAccion}</div>`; return item; }
@@ -455,13 +391,61 @@
             }
         }
         
+        // <<< PRIMERA MODIFICACIÓN IMPORTANTE: Función de eliminación mejorada >>>
         async function manejarEliminarNovedad(novedadId) {
-            if (!esAdmin()) { mostrarNotificacion('No tienes permisos para eliminar.', 'error'); return; }
+            if (!esAdmin()) {
+                mostrarNotificacion('No tienes permisos para eliminar.', 'error');
+                return;
+            }
+
             if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) {
-                const { error } = await supabase.from('novedades').delete().eq('id', novedadId);
-                if (error) mostrarNotificacion("Error al eliminar", 'error');
-                else {
+                try {
+                    // 1. Antes de borrar, obtenemos el ID de la vía a la que pertenece la tarea
+                    const { data: novedad, error: fetchError } = await supabase
+                        .from('novedades')
+                        .select('via_id')
+                        .eq('id', novedadId)
+                        .single();
+
+                    if (fetchError || !novedad) throw new Error("No se pudo encontrar la tarea para obtener su vía.");
+
+                    const viaIdAfectada = novedad.via_id;
+
+                    // 2. Eliminamos la tarea
+                    const { error: deleteError } = await supabase
+                        .from('novedades')
+                        .delete()
+                        .eq('id', novedadId);
+                    
+                    if (deleteError) throw deleteError;
+
                     mostrarNotificacion("Eliminado con éxito.");
+
+                    // 3. Verificamos si quedaban más tareas pendientes en esa vía
+                    const { count: remainingTasks, error: countError } = await supabase
+                        .from('novedades')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('via_id', viaIdAfectada)
+                        .eq('resuelta', false);
+
+                    if (countError) throw countError;
+
+                    // 4. Si no quedan tareas pendientes, actualizamos el estado de la vía a 'normal'
+                    if (remainingTasks === 0) {
+                        const { error: updateViaError } = await supabase
+                            .from('vias')
+                            .update({ status: 'normal' })
+                            .eq('id', viaIdAfectada);
+                        
+                        if (!updateViaError) {
+                            mostrarNotificacion(`La vía ha vuelto al estado 'Normal'.`, 'success');
+                        }
+                    }
+                    // No necesitamos refrescar la UI manualmente, el listener se encargará.
+
+                } catch (error) {
+                    console.error("Error en el proceso de eliminación:", error);
+                    mostrarNotificacion("Error al eliminar la tarea.", 'error');
                 }
             }
         }
@@ -478,18 +462,17 @@
                 mostrarNotificacion('La descripción no puede estar vacía.', 'error');
             }
         }
-
         function mostrarEditorNovedad(itemLi) { const contenido = itemLi.querySelector('.novedad-contenido'), textoActual = contenido.querySelector('.descripcion-texto').innerText; itemLi.querySelector('.novedad-acciones').style.display = 'none'; contenido.innerHTML = `<div class="edit-container"><textarea class="edit-textarea">${textoActual}</textarea><div class="edit-actions"><button class="btn-guardar-edicion">Guardar</button><button class="btn-cancelar-edicion">Cancelar</button></div></div>`; }
         function mostrarNotificacion(mensaje, tipo = 'success') { const container = document.getElementById('toast-container'), toast = document.createElement('div'); toast.className = `toast ${tipo}`; toast.textContent = mensaje; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 100); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000); }
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
         
+        // --- LÓGICA DE SESIÓN Y AUTENTICACIÓN --- (Sin cambios)
         const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
         const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
         const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; adminTasksContainer.style.display = 'none'; currentUserEmail = null; currentUserRole = 'operator'; };
         function cerrarModal() { modal.style.display = 'none'; viaActualModal = null; }
         
-        // <<< MODIFICACIÓN CLAVE: Quitar refresco manual >>>
         async function manejarSubmitNovedad(event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -573,40 +556,78 @@
             })
         }
 
-        // <<< MODIFICACIÓN CLAVE: Listener se convierte en la única fuente de verdad para los refrescos >>>
-        function escucharCambiosVias() { 
-            if (canalVias) return; 
+        // <<< SEGUNDA MODIFICACIÓN IMPORTANTE: Listener de Supabase centralizado y mejorado >>>
+        function escucharCambiosVias() {
+            if (canalVias) return; // Evita suscribirse múltiples veces
 
-            canalVias = supabase.channel('cambios-db-vias')
-                .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => { 
+            canalVias = supabase.channel('cambios-db-general')
+                .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
                     
-                    console.log('Cambio en tiempo real detectado en la tabla:', payload.table); 
-                    
-                    if (payload.table === 'vias' || payload.table === 'novedades') { 
-                        cargarVias(); 
-                        if (modal.style.display === 'block' && viaActualModal) { 
-                            cargarNovedadesModal(); 
-                        } 
-                    } 
-                    
-                    if (payload.table === 'tareas_predeterminadas') { 
-                        if(esAdmin()) {
-                            cargarYRenderizarTareasPredeterminadas(); 
-                        } else {
-                            // Para usuarios no-admin, solo actualizamos el array interno para el <select> del modal
-                            supabase.from('tareas_predeterminadas').select('id, descripcion').then(({data}) => {
-                                if(data) tareasPredeterminadas = data;
+                    console.log('Cambio en tiempo real detectado:', payload);
+
+                    // Si cambia cualquier vía o cualquier tarea/novedad...
+                    if (payload.table === 'vias' || payload.table === 'novedades') {
+                        console.log('Refrescando panel principal y modal si está abierto...');
+                        
+                        // Siempre refresca la vista principal de vías
+                        await cargarVias();
+
+                        // Si el modal está abierto, también refresca su contenido
+                        if (modal.style.display === 'block' && viaActualModal) {
+                            
+                            // Asegurarnos de que el estado de la vía en el modal también se actualice
+                            const { data: viaActualizada, error } = await supabase
+                                .from('vias')
+                                .select('status')
+                                .eq('id', viaActualModal.id)
+                                .single();
+
+                            if (!error && viaActualizada) {
+                                viaActualModal.status = viaActualizada.status;
+                                document.getElementById('status-via').value = viaActualizada.status;
+                            }
+                            
+                            await cargarNovedadesModal();
+                        }
+                    }
+
+                    // Si cambian las tareas predeterminadas...
+                    if (payload.table === 'tareas_predeterminadas') {
+                        console.log('Refrescando lista de tareas predeterminadas...');
+                        
+                        // Actualizamos el array interno para todos
+                        const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion');
+                        if (!error) {
+                            tareasPredeterminadas = data;
+                        }
+                        
+                        // Si el usuario es admin, también refrescamos el panel de gestión
+                        if (esAdmin()) {
+                            await cargarYRenderizarTareasPredeterminadas();
+                        }
+
+                        // Si el modal está abierto, refrescamos el dropdown <select>
+                        if (modal.style.display === 'block') {
+                            selectTareaPredeterminada.innerHTML = '<option value="">-- Escribir tarea manualmente --</option>';
+                            tareasPredeterminadas.forEach(task => {
+                                const option = document.createElement('option');
+                                option.value = task.descripcion;
+                                option.textContent = task.descripcion;
+                                selectTareaPredeterminada.appendChild(option);
                             });
                         }
                     }
                 
                 }).subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
-                        console.log('¡Conectado al canal de tiempo real!');
+                        console.log('¡Conectado al canal de tiempo real para todos los cambios!');
+                    } else {
+                        console.log('Estado del canal en tiempo real:', status);
                     }
-                }); 
+                });
         }
         
+        // --- EVENT LISTENERS --- (Sin cambios)
         document.addEventListener('DOMContentLoaded', () => { 
             document.getElementById('footer-year').textContent = new Date().getFullYear(); 
             renderJarState(); 
@@ -628,25 +649,10 @@
             globalSearchBox.addEventListener('input', () => { if (globalSearchBox.value.trim() === '') { document.getElementById('global-search-results-container').style.display = 'none'; } }); 
             document.getElementById('guardar-modelo-barrera').addEventListener('click', guardarModeloBarrera); 
             document.querySelector('.tasks-section').addEventListener('click', async (e) => { const target = e.target, itemLi = target.closest('li'); if (!itemLi) return; const novedadId = itemLi.dataset.novedadId; if (target.classList.contains('btn-resolver')) { if (confirm("¿Marcar esta tarea como resuelta?")) { await resolverNovedad(novedadId); } } else if (target.classList.contains('btn-eliminar')) { await manejarEliminarNovedad(novedadId); } else if (target.classList.contains('btn-editar')) { mostrarEditorNovedad(itemLi); } else if (target.classList.contains('btn-guardar-edicion')) { await guardarEdicionNovedad(itemLi, novedadId); } else if (target.classList.contains('btn-cancelar-edicion')) { await cargarNovedadesModal(); } });
-
-            // <<< Listeners para las nuevas funcionalidades sin cambios >>>
-            selectTareaPredeterminada.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    document.getElementById('descripcion-novedad').value = e.target.value;
-                }
-            });
+            selectTareaPredeterminada.addEventListener('change', (e) => { if (e.target.value) { document.getElementById('descripcion-novedad').value = e.target.value; } });
             addPresetTaskButton.addEventListener('click', agregarTareaPredeterminada);
-            newPresetTaskInput.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') {
-                    agregarTareaPredeterminada();
-                }
-            });
-            presetTasksList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-preset-task')) {
-                    const id = e.target.dataset.id;
-                    eliminarTareaPredeterminada(id);
-                }
-            });
+            newPresetTaskInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') { agregarTareaPredeterminada(); } });
+            presetTasksList.addEventListener('click', (e) => { if (e.target.classList.contains('delete-preset-task')) { const id = e.target.dataset.id; eliminarTareaPredeterminada(id); } });
         });
     </script>
 </body>
