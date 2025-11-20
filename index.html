@@ -272,6 +272,8 @@
             
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
         let tareasPredeterminadas = [];
+        // >>>>> MODIFICACIÓN 1: Añadimos una variable para guardar las tareas pendientes
+        let tareasPendientes = [];
         let tooltipTimer = null; 
 
         const esAdmin = () => currentUserRole === 'admin';
@@ -279,8 +281,28 @@
         // --- LÓGICA PARA EL FRASCO DE POROTOS --- (Sin cambios)
         const MAX_POROTOS = 20; let porotoCount = 0; const porotosContainer = document.getElementById('porotos-container'), porotoCounterDisplay = document.getElementById('poroto-counter'), porotoJar = document.getElementById('poroto-jar'); function addPoroto() { if (porotoCount >= MAX_POROTOS) return; porotoCount++; localStorage.setItem('porotoCount', porotoCount); const poroto = document.createElement('div'); poroto.className = 'poroto'; porotosContainer.appendChild(poroto); updatePorotoCounter(); if (porotoCount === MAX_POROTOS) { porotoJar.classList.add('jar-full-animation'); mostrarNotificacion('¡Frasco lleno! Buen trabajo equipo. 🎉', 'success'); setTimeout(resetJar, 2000); } } function resetJar() { porotoJar.classList.remove('jar-full-animation'); const porotos = porotosContainer.querySelectorAll('.poroto'); porotos.forEach(p => p.classList.add('poroto-exit')); setTimeout(() => { porotosContainer.innerHTML = ''; porotoCount = 0; localStorage.setItem('porotoCount', 0); updatePorotoCounter(); }, 500); } function updatePorotoCounter() { porotoCounterDisplay.textContent = `${porotoCount} / ${MAX_POROTOS}`; } function renderJarState() { const savedCount = parseInt(localStorage.getItem('porotoCount')) || 0; porotoCount = savedCount; porotosContainer.innerHTML = ''; for (let i = 0; i < porotoCount; i++) { const poroto = document.createElement('div'); poroto.className = 'poroto'; poroto.style.animation = 'none'; porotosContainer.appendChild(poroto); } updatePorotoCounter(); }
 
-        // --- LÓGICA DE TOOLTIPS --- (Sin cambios)
-        async function mostrarTooltip(viaId, targetElement, status) { tooltipProblema.className = `tooltip-${status}`; const { data, error } = await supabase.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single(); if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; } const rect = targetElement.getBoundingClientRect(); tooltipProblema.style.left = `${rect.left + window.scrollX}px`; tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`; tooltipProblema.classList.add('visible'); } function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
+        // >>>>> MODIFICACIÓN 2: Tooltip ahora usa datos locales, no hace llamadas a la API
+        function mostrarTooltip(viaId, targetElement, status) {
+            tooltipProblema.className = `tooltip-${status}`;
+            
+            // Busca la última tarea para esta vía en los datos que ya tenemos
+            const tareasDeLaVia = tareasPendientes
+                .filter(t => t.via_id === viaId)
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            if (tareasDeLaVia.length === 0) {
+                tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>';
+            } else {
+                // Muestra la descripción de la tarea más reciente
+                tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${tareasDeLaVia[0].descripcion}`;
+            }
+            
+            const rect = targetElement.getBoundingClientRect();
+            tooltipProblema.style.left = `${rect.left + window.scrollX}px`;
+            tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`;
+            tooltipProblema.classList.add('visible');
+        }
+        function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
 
         // --- Bloque de funciones para gestionar tareas predeterminadas --- (Sin cambios)
         async function cargarYRenderizarTareasPredeterminadas() { if (!esAdmin()) return; presetTasksLoader.style.display = 'flex'; presetTasksList.innerHTML = ''; try { const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion').order('descripcion', { ascending: true }); if (error) throw error; tareasPredeterminadas = data; if (data.length === 0) { presetTasksList.innerHTML = '<li>No hay tareas predeterminadas.</li>'; } else { data.forEach(task => { const li = document.createElement('li'); li.innerHTML = `<span>${task.descripcion}</span><button data-id="${task.id}" class="delete-preset-task">Eliminar</button>`; presetTasksList.appendChild(li); }); } } catch (error) { console.error("Error al cargar tareas predeterminadas:", error); mostrarNotificacion("No se pudieron cargar las tareas predeterminadas.", "error"); } finally { presetTasksLoader.style.display = 'none'; } }
@@ -289,16 +311,25 @@
         async function inicializarPanelesYDatos() { await cargarVias(); if (esAdmin()) { adminTasksContainer.style.display = 'block'; await cargarYRenderizarTareasPredeterminadas(); } else { adminTasksContainer.style.display = 'none'; const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion'); if (!error) { tareasPredeterminadas = data; } } }
 
 
-        // --- LÓGICA PRINCIPAL --- (Sin cambios)
+        // >>>>> MODIFICACIÓN 3: `cargarVias` ahora también obtiene todas las tareas pendientes de una vez
         async function cargarVias() {
-            document.querySelectorAll('.loader-container').forEach(loader => loader.style.display = 'flex');
+            document.querySelectorAll('.grupo-vias .loader-container').forEach(loader => loader.style.display = 'flex');
             try {
-                const { data: vias, error } = await supabase.from('vias').select(`id, numero_via, status, modelo_barrera`).order('numero_via', { ascending: true });
-                if (error) throw error;
-                todasLasVias = vias;
+                // Hacemos dos peticiones en paralelo para ser más eficientes
+                const [viasRes, tareasRes] = await Promise.all([
+                    supabase.from('vias').select(`id, numero_via, status, modelo_barrera`).order('numero_via', { ascending: true }),
+                    supabase.from('novedades').select(`id, via_id, descripcion, created_at`).eq('resuelta', false)
+                ]);
+
+                if (viasRes.error) throw viasRes.error;
+                if (tareasRes.error) throw tareasRes.error;
+                
+                todasLasVias = viasRes.data;
+                tareasPendientes = tareasRes.data; // Guardamos las tareas pendientes globalmente
+
                 document.querySelectorAll('.vias-grid').forEach(g => g.innerHTML = '');
 
-                for (const via of vias) {
+                for (const via of todasLasVias) {
                     const viaBox = document.createElement('div');
                     viaBox.className = `via-box status-${via.status}`;
                     viaBox.dataset.viaId = via.id;
@@ -314,10 +345,10 @@
                         viaBox.addEventListener('mouseenter', () => {
                             clearTimeout(tooltipTimer);
                             tooltipTimer = setTimeout(() => {
-                                mostrarTooltip(via.id, viaBox, via.status);
+                                // Pasamos el ID como número para que coincida con `via_id`
+                                mostrarTooltip(Number(via.id), viaBox, via.status);
                             }, 300); 
                         });
-
                         viaBox.addEventListener('mouseleave', () => {
                             clearTimeout(tooltipTimer);
                             ocultarTooltip();
@@ -331,7 +362,7 @@
                 actualizarDashboard();
                 filtrarVias();
             } catch (error) {
-                console.error('Error al cargar las vías:', error);
+                console.error('Error al cargar datos iniciales:', error);
                 mostrarNotificacion('No se pudieron cargar los datos.', 'error');
             } finally {
                 document.querySelectorAll('.grupo-vias .loader-container').forEach(loader => loader.style.display = 'none');
@@ -391,58 +422,27 @@
             }
         }
         
-        // <<< PRIMERA MODIFICACIÓN IMPORTANTE: Función de eliminación mejorada >>>
         async function manejarEliminarNovedad(novedadId) {
-            if (!esAdmin()) {
-                mostrarNotificacion('No tienes permisos para eliminar.', 'error');
-                return;
-            }
-
+            if (!esAdmin()) { mostrarNotificacion('No tienes permisos para eliminar.', 'error'); return; }
             if (confirm("¿Seguro que desea eliminar esta tarea/novedad?")) {
                 try {
-                    // 1. Antes de borrar, obtenemos el ID de la vía a la que pertenece la tarea
-                    const { data: novedad, error: fetchError } = await supabase
-                        .from('novedades')
-                        .select('via_id')
-                        .eq('id', novedadId)
-                        .single();
-
+                    const { data: novedad, error: fetchError } = await supabase.from('novedades').select('via_id').eq('id', novedadId).single();
                     if (fetchError || !novedad) throw new Error("No se pudo encontrar la tarea para obtener su vía.");
-
                     const viaIdAfectada = novedad.via_id;
-
-                    // 2. Eliminamos la tarea
-                    const { error: deleteError } = await supabase
-                        .from('novedades')
-                        .delete()
-                        .eq('id', novedadId);
-                    
+                    const { error: deleteError } = await supabase.from('novedades').delete().eq('id', novedadId);
                     if (deleteError) throw deleteError;
-
                     mostrarNotificacion("Eliminado con éxito.");
-
-                    // 3. Verificamos si quedaban más tareas pendientes en esa vía
-                    const { count: remainingTasks, error: countError } = await supabase
-                        .from('novedades')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('via_id', viaIdAfectada)
-                        .eq('resuelta', false);
-
+                    const { count, error: countError } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaIdAfectada).eq('resuelta', false);
                     if (countError) throw countError;
-
-                    // 4. Si no quedan tareas pendientes, actualizamos el estado de la vía a 'normal'
-                    if (remainingTasks === 0) {
-                        const { error: updateViaError } = await supabase
-                            .from('vias')
-                            .update({ status: 'normal' })
-                            .eq('id', viaIdAfectada);
-                        
-                        if (!updateViaError) {
-                            mostrarNotificacion(`La vía ha vuelto al estado 'Normal'.`, 'success');
+                    if (count === 0) {
+                        const { data: via, error: viaError } = await supabase.from('vias').select('status').eq('id', viaIdAfectada).single();
+                        if(via && via.status !== 'normal') {
+                            const { error: updateViaError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaIdAfectada);
+                            if (!updateViaError) {
+                                mostrarNotificacion(`La vía ha vuelto al estado 'Normal'.`, 'success');
+                            }
                         }
                     }
-                    // No necesitamos refrescar la UI manualmente, el listener se encargará.
-
                 } catch (error) {
                     console.error("Error en el proceso de eliminación:", error);
                     mostrarNotificacion("Error al eliminar la tarea.", 'error');
@@ -455,9 +455,7 @@
             if(nuevoTexto){
                 const { error } = await supabase.from('novedades').update({ descripcion: nuevoTexto }).eq('id', novedadId);
                 if(error) mostrarNotificacion('Error al guardar la edición.', 'error');
-                else {
-                    mostrarNotificacion('Tarea actualizada.');
-                }
+                else { mostrarNotificacion('Tarea actualizada.'); }
             } else {
                 mostrarNotificacion('La descripción no puede estar vacía.', 'error');
             }
@@ -467,7 +465,6 @@
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
         
-        // --- LÓGICA DE SESIÓN Y AUTENTICACIÓN --- (Sin cambios)
         const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
         const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
         const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; adminTasksContainer.style.display = 'none'; currentUserEmail = null; currentUserRole = 'operator'; };
@@ -491,10 +488,7 @@
                 }
 
                 const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
-                    mostrarNotificacion('Sesión expirada.', 'error');
-                    return;
-                }
+                if (!user) { mostrarNotificacion('Sesión expirada.', 'error'); return; }
 
                 const insertPayload = {
                     via_id: idVia,
@@ -556,52 +550,41 @@
             })
         }
 
-        // <<< SEGUNDA MODIFICACIÓN IMPORTANTE: Listener de Supabase centralizado y mejorado >>>
+        // >>>>> MODIFICACIÓN 4: Listener de Supabase centralizado y robusto
         function escucharCambiosVias() {
-            if (canalVias) return; // Evita suscribirse múltiples veces
+            if (canalVias) {
+                console.log("Ya existe un canal, no se creará uno nuevo.");
+                return;
+            }
 
             canalVias = supabase.channel('cambios-db-general')
                 .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
                     
                     console.log('Cambio en tiempo real detectado:', payload);
-
-                    // Si cambia cualquier vía o cualquier tarea/novedad...
+                    
+                    // Si el cambio afecta a vías o novedades, recargamos los datos principales
                     if (payload.table === 'vias' || payload.table === 'novedades') {
-                        console.log('Refrescando panel principal y modal si está abierto...');
-                        
-                        // Siempre refresca la vista principal de vías
-                        await cargarVias();
+                        console.log('Refrescando datos de vías y tareas pendientes...');
+                        await cargarVias(); // Esta función ahora carga vías Y tareas
 
                         // Si el modal está abierto, también refresca su contenido
                         if (modal.style.display === 'block' && viaActualModal) {
-                            
-                            // Asegurarnos de que el estado de la vía en el modal también se actualice
-                            const { data: viaActualizada, error } = await supabase
-                                .from('vias')
-                                .select('status')
-                                .eq('id', viaActualModal.id)
-                                .single();
-
-                            if (!error && viaActualizada) {
-                                viaActualModal.status = viaActualizada.status;
-                                document.getElementById('status-via').value = viaActualizada.status;
-                            }
-                            
+                            console.log('Modal abierto, refrescando su contenido...');
                             await cargarNovedadesModal();
                         }
                     }
 
-                    // Si cambian las tareas predeterminadas...
+                    // Si el cambio afecta a las tareas predeterminadas
                     if (payload.table === 'tareas_predeterminadas') {
                         console.log('Refrescando lista de tareas predeterminadas...');
                         
                         // Actualizamos el array interno para todos
                         const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion');
-                        if (!error) {
+                        if (!error && data) {
                             tareasPredeterminadas = data;
                         }
                         
-                        // Si el usuario es admin, también refrescamos el panel de gestión
+                        // Si el usuario es admin, refrescamos el panel de gestión
                         if (esAdmin()) {
                             await cargarYRenderizarTareasPredeterminadas();
                         }
@@ -618,16 +601,17 @@
                         }
                     }
                 
-                }).subscribe((status) => {
+                }).subscribe((status, err) => {
                     if (status === 'SUBSCRIBED') {
                         console.log('¡Conectado al canal de tiempo real para todos los cambios!');
+                    } else if (status === 'CHANNEL_ERROR') {
+                        console.error('Error en el canal de tiempo real:', err);
                     } else {
                         console.log('Estado del canal en tiempo real:', status);
                     }
                 });
         }
         
-        // --- EVENT LISTENERS --- (Sin cambios)
         document.addEventListener('DOMContentLoaded', () => { 
             document.getElementById('footer-year').textContent = new Date().getFullYear(); 
             renderJarState(); 
