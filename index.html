@@ -396,7 +396,6 @@
               selectTareaPredeterminada = document.getElementById('select-tarea-predeterminada'),
               marcarResueltaInput = document.getElementById('marcar-resuelta-input');
         
-        // >>>>> ELEMENTOS DEL DOM PARA REPORTES <<<<<
         const reportGeneratorContainer = document.getElementById('report-generator-container');
             
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
@@ -430,7 +429,6 @@
         async function agregarTareaPredeterminada() { const descripcion = newPresetTaskInput.value.trim(); if (!descripcion) { mostrarNotificacion("La descripción no puede estar vacía.", "error"); return; } addPresetTaskButton.disabled = true; try { const { error } = await supabase.from('tareas_predeterminadas').insert([{ descripcion }]); if (error) throw error; mostrarNotificacion("Tarea predeterminada agregada.", "success"); newPresetTaskInput.value = ''; } catch (error) { console.error("Error al agregar tarea predeterminada:", error); mostrarNotificacion("Error al guardar la tarea.", "error"); } finally { addPresetTaskButton.disabled = false; } }
         async function eliminarTareaPredeterminada(id) { if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return; try { const { error } = await supabase.from('tareas_predeterminadas').delete().eq('id', id); if (error) throw error; mostrarNotificacion("Tarea predeterminada eliminada.", "success"); } catch (error) { console.error("Error al eliminar tarea predeterminada:", error); mostrarNotificacion("Error al eliminar la tarea.", "error"); } }
         
-        // >>>>> MODIFICACIÓN: inicializarPanelesYDatos ahora también maneja el panel de reportes <<<<<
         async function inicializarPanelesYDatos() { 
             await cargarVias(); 
             if (esAdmin()) { 
@@ -591,7 +589,7 @@
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
         
-        // >>>>> INICIO: NUEVA FUNCIÓN PARA DESCARGAR REPORTE CSV <<<<<
+        // >>>>> INICIO: FUNCIÓN MEJORADA PARA DESCARGAR REPORTE CSV <<<<<
         async function descargarReporteCSV() {
             const startDateInput = document.getElementById('report-start-date');
             const endDateInput = document.getElementById('report-end-date');
@@ -625,9 +623,13 @@
 
                 if (data.length === 0) {
                     mostrarNotificacion('No hay tareas resueltas en el rango de fechas seleccionado.', 'success');
+                    // Limpiamos las fechas aunque no haya datos
+                    startDateInput.value = '';
+                    endDateInput.value = '';
                     return;
                 }
 
+                // Usamos punto y coma (;) como separador para mejor compatibilidad con Excel
                 const headers = [
                     'ID Tarea',
                     'Numero de Via',
@@ -638,22 +640,35 @@
                     'Fecha de Resolucion'
                 ];
 
-                const csvRows = [headers.join(',')];
+                const csvRows = [headers.join(';')]; // Unimos cabeceras con ;
 
                 data.forEach(novedad => {
+                    // Función para limpiar texto para CSV
+                    const cleanText = (text) => {
+                        if (!text) return '';
+                        // Reemplaza comillas dobles por comillas dobles escapadas y envuelve en comillas
+                        let cleaned = text.toString().replace(/"/g, '""');
+                        // Adicionalmente, removemos saltos de línea que pueden romper el CSV
+                        cleaned = cleaned.replace(/(\r\n|\n|\r)/gm, " ");
+                        return `"${cleaned}"`;
+                    };
+                    
                     const row = [
                         novedad.id,
                         novedad.vias ? novedad.vias.numero_via : 'N/A',
-                        `"${novedad.descripcion.replace(/"/g, '""')}"`, // Escapar comillas dobles
+                        cleanText(novedad.descripcion),
                         novedad.user_email || 'Sistema',
                         new Date(novedad.created_at).toLocaleString('es-AR'),
                         novedad.resolved_by || 'N/A',
                         new Date(novedad.resolved_at).toLocaleString('es-AR')
                     ];
-                    csvRows.push(row.join(','));
+                    csvRows.push(row.join(';')); // Unimos cada fila con ;
                 });
-
-                const csvContent = csvRows.join('\n');
+                
+                // El BOM (Byte Order Mark) \uFEFF le indica a Excel que es UTF-8
+                const bom = '\uFEFF'; 
+                const csvContent = bom + csvRows.join('\n');
+                
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 
@@ -666,6 +681,10 @@
                 document.body.removeChild(link);
 
                 mostrarNotificacion('Reporte descargado con éxito.', 'success');
+                
+                // Limpiamos las fechas después de una descarga exitosa
+                startDateInput.value = '';
+                endDateInput.value = '';
 
             } catch (error) {
                 console.error('Error generando el reporte:', error);
@@ -675,7 +694,7 @@
                 downloadButton.textContent = 'Descargar Reporte';
             }
         }
-        // >>>>> FIN: NUEVA FUNCIÓN PARA DESCARGAR REPORTE CSV <<<<<
+        // >>>>> FIN: FUNCIÓN MEJORADA PARA DESCARGAR REPORTE CSV <<<<<
 
         const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
         const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
