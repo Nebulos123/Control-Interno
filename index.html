@@ -161,15 +161,15 @@
         #preset-tasks-list li { background-color: #4c566a; padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #88c0d0; }
         #preset-tasks-list button { background-color: #bf616a; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
 
-        /* >>>>> INICIO: ESTILOS PARA EL ACORDEÓN DE TAREAS PREDETERMINADAS <<<<< */
+        /* --- ESTILOS PARA EL ACORDEÓN DE TAREAS PREDETERMINADAS --- */
         .accordion-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            cursor: pointer; /* Cambia el cursor para indicar que es clickeable */
+            cursor: pointer;
         }
         .accordion-header h3 {
-            margin: 0; /* Quitamos márgenes para que se alinee bien */
+            margin: 0;
         }
         .accordion-toggle-btn {
             background: none;
@@ -180,15 +180,14 @@
             transition: background-color 0.2s, transform 0.3s ease-out;
         }
         .accordion-toggle-btn:hover {
-            background-color: rgba(136, 192, 208, 0.2); /* Un hover sutil */
+            background-color: rgba(136, 192, 208, 0.2);
         }
         .accordion-toggle-btn svg {
             width: 20px;
             height: 20px;
-            stroke: #eceff4; /* Color de la flecha */
+            stroke: #eceff4;
             transition: transform 0.3s ease-out;
         }
-        /* Estilo para la flecha cuando el acordeón está abierto */
         .accordion-toggle-btn.open svg {
             transform: rotate(180deg);
         }
@@ -196,16 +195,71 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.4s ease-out;
-            /* Los siguientes estilos son para que el contenido no aparezca "pegado" al título */
             padding-top: 0;
             margin-top: 0;
         }
         .accordion-content.open {
-            /* Una altura máxima grande para asegurar que todo el contenido entre */
             max-height: 500px; 
-            padding-top: 20px; /* Espacio superior cuando se despliega */
+            padding-top: 20px;
         }
-        /* >>>>> FIN: ESTILOS PARA EL ACORDEÓN <<<<< */
+        
+        /* >>>>> INICIO: ESTILOS PARA EL GENERADOR DE REPORTES <<<<< */
+        #report-generator-container {
+            background-color: rgba(46, 52, 64, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+        }
+        #report-generator-container h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #5e81ac;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .report-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .report-controls .date-picker-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .report-controls label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            color: #d8dee9;
+        }
+        .report-controls input[type="date"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #4c566a;
+            background-color: #d8dee9;
+            color: #2e3440;
+            font-family: 'Roboto', sans-serif;
+        }
+        #download-report-button {
+            padding: 12px 20px;
+            background-color: #a3be8c;
+            border: none;
+            border-radius: 5px;
+            color: #2e3440;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            align-self: flex-end; /* Alinear con la parte inferior de los inputs */
+        }
+        #download-report-button:hover {
+            background-color: #b2d89b;
+        }
+        #download-report-button:disabled {
+            background-color: #5e81ac;
+            cursor: not-allowed;
+        }
+        /* >>>>> FIN: ESTILOS PARA EL GENERADOR DE REPORTES <<<<< */
 
     </style>
 </head>
@@ -219,7 +273,24 @@
             <div class="controles-vias"><input type="search" id="search-box" placeholder="Buscar por número de vía..."><div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div>
             <div class="busqueda-global-container"><div class="busqueda-global-input"><input type="search" id="global-search-box" placeholder="Buscar problema en todas las vías (ej: Contactor, Barrera...)"><button id="global-search-button">Buscar</button></div><div id="global-search-results-container" style="display: none;"><h3>Resultados de la Búsqueda</h3><div class="loader-container" id="global-search-loader" style="display: none;"><div class="spinner"></div></div><ul id="global-search-results-list"></ul><p id="no-global-results-message" style="display: none;">No se encontraron resultados para tu búsqueda.</p></div></div>
             
-            <!-- >>>>> MODIFICACIÓN HTML: Contenedor de tareas con estructura de acordeón <<<<< -->
+            <!-- >>>>> INICIO: PANEL GENERADOR DE REPORTES <<<<< -->
+            <div id="report-generator-container" style="display: none;">
+                <h3>Generación de Reportes</h3>
+                <div class="report-controls">
+                    <div class="date-picker-group">
+                        <label for="report-start-date">Fecha de Inicio:</label>
+                        <input type="date" id="report-start-date">
+                    </div>
+                    <div class="date-picker-group">
+                        <label for="report-end-date">Fecha de Fin:</label>
+                        <input type="date" id="report-end-date">
+                    </div>
+                    <button id="download-report-button">Descargar Reporte</button>
+                </div>
+            </div>
+            <!-- >>>>> FIN: PANEL GENERADOR DE REPORTES <<<<< -->
+            
+            <!-- Contenedor para gestión de tareas predeterminadas con acordeón -->
             <div id="admin-tasks-container" class="busqueda-global-container" style="display: none;">
                 <div class="accordion-header">
                     <h3>Gestión de Tareas Predeterminadas</h3>
@@ -324,6 +395,9 @@
               presetTasksLoader = document.getElementById('preset-tasks-loader'),
               selectTareaPredeterminada = document.getElementById('select-tarea-predeterminada'),
               marcarResueltaInput = document.getElementById('marcar-resuelta-input');
+        
+        // >>>>> ELEMENTOS DEL DOM PARA REPORTES <<<<<
+        const reportGeneratorContainer = document.getElementById('report-generator-container');
             
         let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
         let tareasPredeterminadas = [];
@@ -355,7 +429,21 @@
         async function cargarYRenderizarTareasPredeterminadas() { if (!esAdmin()) return; presetTasksLoader.style.display = 'flex'; presetTasksList.innerHTML = ''; try { const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion').order('descripcion', { ascending: true }); if (error) throw error; tareasPredeterminadas = data; if (data.length === 0) { presetTasksList.innerHTML = '<li>No hay tareas predeterminadas.</li>'; } else { data.forEach(task => { const li = document.createElement('li'); li.innerHTML = `<span>${task.descripcion}</span><button data-id="${task.id}" class="delete-preset-task">Eliminar</button>`; presetTasksList.appendChild(li); }); } } catch (error) { console.error("Error al cargar tareas predeterminadas:", error); mostrarNotificacion("No se pudieron cargar las tareas predeterminadas.", "error"); } finally { presetTasksLoader.style.display = 'none'; } }
         async function agregarTareaPredeterminada() { const descripcion = newPresetTaskInput.value.trim(); if (!descripcion) { mostrarNotificacion("La descripción no puede estar vacía.", "error"); return; } addPresetTaskButton.disabled = true; try { const { error } = await supabase.from('tareas_predeterminadas').insert([{ descripcion }]); if (error) throw error; mostrarNotificacion("Tarea predeterminada agregada.", "success"); newPresetTaskInput.value = ''; } catch (error) { console.error("Error al agregar tarea predeterminada:", error); mostrarNotificacion("Error al guardar la tarea.", "error"); } finally { addPresetTaskButton.disabled = false; } }
         async function eliminarTareaPredeterminada(id) { if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return; try { const { error } = await supabase.from('tareas_predeterminadas').delete().eq('id', id); if (error) throw error; mostrarNotificacion("Tarea predeterminada eliminada.", "success"); } catch (error) { console.error("Error al eliminar tarea predeterminada:", error); mostrarNotificacion("Error al eliminar la tarea.", "error"); } }
-        async function inicializarPanelesYDatos() { await cargarVias(); if (esAdmin()) { adminTasksContainer.style.display = 'block'; await cargarYRenderizarTareasPredeterminadas(); } else { adminTasksContainer.style.display = 'none'; const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion'); if (!error) { tareasPredeterminadas = data; } } }
+        
+        // >>>>> MODIFICACIÓN: inicializarPanelesYDatos ahora también maneja el panel de reportes <<<<<
+        async function inicializarPanelesYDatos() { 
+            await cargarVias(); 
+            if (esAdmin()) { 
+                adminTasksContainer.style.display = 'block'; 
+                reportGeneratorContainer.style.display = 'block'; // Mostrar panel de reportes
+                await cargarYRenderizarTareasPredeterminadas(); 
+            } else { 
+                adminTasksContainer.style.display = 'none'; 
+                reportGeneratorContainer.style.display = 'none'; // Ocultar panel de reportes
+                const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion'); 
+                if (!error) { tareasPredeterminadas = data; } 
+            } 
+        }
 
         // --- LÓGICA PRINCIPAL --- (Sin cambios)
         async function cargarVias() {
@@ -503,6 +591,92 @@
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
         
+        // >>>>> INICIO: NUEVA FUNCIÓN PARA DESCARGAR REPORTE CSV <<<<<
+        async function descargarReporteCSV() {
+            const startDateInput = document.getElementById('report-start-date');
+            const endDateInput = document.getElementById('report-end-date');
+            const downloadButton = document.getElementById('download-report-button');
+
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
+            if (!startDate || !endDate) {
+                mostrarNotificacion('Por favor, selecciona una fecha de inicio y una de fin.', 'error');
+                return;
+            }
+
+            downloadButton.disabled = true;
+            downloadButton.textContent = 'Generando...';
+
+            try {
+                // Ajustamos la fecha final para incluir todo el día
+                const endDateAdjusted = new Date(endDate);
+                endDateAdjusted.setHours(23, 59, 59, 999);
+
+                const { data, error } = await supabase
+                    .from('novedades')
+                    .select('*, vias(numero_via)')
+                    .eq('resuelta', true)
+                    .gte('resolved_at', new Date(startDate).toISOString())
+                    .lte('resolved_at', endDateAdjusted.toISOString())
+                    .order('resolved_at', { ascending: true });
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    mostrarNotificacion('No hay tareas resueltas en el rango de fechas seleccionado.', 'success');
+                    return;
+                }
+
+                const headers = [
+                    'ID Tarea',
+                    'Numero de Via',
+                    'Descripcion',
+                    'Creado Por',
+                    'Fecha de Creacion',
+                    'Resuelto Por',
+                    'Fecha de Resolucion'
+                ];
+
+                const csvRows = [headers.join(',')];
+
+                data.forEach(novedad => {
+                    const row = [
+                        novedad.id,
+                        novedad.vias ? novedad.vias.numero_via : 'N/A',
+                        `"${novedad.descripcion.replace(/"/g, '""')}"`, // Escapar comillas dobles
+                        novedad.user_email || 'Sistema',
+                        new Date(novedad.created_at).toLocaleString('es-AR'),
+                        novedad.resolved_by || 'N/A',
+                        new Date(novedad.resolved_at).toLocaleString('es-AR')
+                    ];
+                    csvRows.push(row.join(','));
+                });
+
+                const csvContent = csvRows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `reporte_tareas_resueltas_${startDate}_a_${endDate}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                mostrarNotificacion('Reporte descargado con éxito.', 'success');
+
+            } catch (error) {
+                console.error('Error generando el reporte:', error);
+                mostrarNotificacion('No se pudo generar el reporte.', 'error');
+            } finally {
+                downloadButton.disabled = false;
+                downloadButton.textContent = 'Descargar Reporte';
+            }
+        }
+        // >>>>> FIN: NUEVA FUNCIÓN PARA DESCARGAR REPORTE CSV <<<<<
+
         const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
         const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
         const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; adminTasksContainer.style.display = 'none'; currentUserEmail = null; currentUserRole = 'operator'; };
@@ -646,9 +820,9 @@
             newPresetTaskInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') { agregarTareaPredeterminada(); } });
             presetTasksList.addEventListener('click', (e) => { if (e.target.classList.contains('delete-preset-task')) { const id = e.target.dataset.id; eliminarTareaPredeterminada(id); } });
             
-            // >>>>> MODIFICACIÓN JAVASCRIPT: Lógica para el acordeón <<<<<
+            // Lógica para el acordeón
             const accordionHeader = document.querySelector('.accordion-header');
-            if (accordionHeader) { // Verificamos si el elemento existe antes de añadir el listener
+            if (accordionHeader) {
                 const toggleBtn = document.getElementById('toggle-preset-tasks');
                 const content = document.getElementById('preset-tasks-content');
 
@@ -656,6 +830,12 @@
                     toggleBtn.classList.toggle('open');
                     content.classList.toggle('open');
                 });
+            }
+
+            // >>>>> LISTENER PARA EL BOTÓN DE DESCARGA DE REPORTES <<<<<
+            const downloadReportBtn = document.getElementById('download-report-button');
+            if(downloadReportBtn) {
+                downloadReportBtn.addEventListener('click', descargarReporteCSV);
             }
         });
     </script>
