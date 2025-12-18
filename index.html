@@ -586,7 +586,7 @@
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
         
-        // >>>>> FUNCIÓN MEJORADA PARA DESCARGAR REPORTE CSV <<<<<
+        // >>>>> INICIO: FUNCIÓN MEJORADA PARA DESCARGAR REPORTE CSV <<<<<
         async function descargarReporteCSV() {
             const startDateInput = document.getElementById('report-start-date');
             const endDateInput = document.getElementById('report-end-date');
@@ -604,6 +604,7 @@
             downloadButton.textContent = 'Generando...';
 
             try {
+                // Ajustamos la fecha final para incluir todo el día
                 const endDateAdjusted = new Date(endDate);
                 endDateAdjusted.setHours(23, 59, 59, 999);
 
@@ -619,22 +620,32 @@
 
                 if (data.length === 0) {
                     mostrarNotificacion('No hay tareas resueltas en el rango de fechas seleccionado.', 'success');
+                    // Limpiamos las fechas aunque no haya datos
                     startDateInput.value = '';
                     endDateInput.value = '';
                     return;
                 }
-                
+
+                // Usamos punto y coma (;) como separador para mejor compatibilidad con Excel
                 const headers = [
-                    'ID Tarea', 'Numero de Via', 'Descripcion', 'Creado Por',
-                    'Fecha de Creacion', 'Resuelto Por', 'Fecha de Resolucion'
+                    'ID Tarea',
+                    'Numero de Via',
+                    'Descripcion',
+                    'Creado Por',
+                    'Fecha de Creacion',
+                    'Resuelto Por',
+                    'Fecha de Resolucion'
                 ];
 
-                const csvRows = [headers.join(';')];
+                const csvRows = [headers.join(';')]; // Unimos cabeceras con ;
 
                 data.forEach(novedad => {
+                    // Función para limpiar texto para CSV
                     const cleanText = (text) => {
                         if (!text) return '';
+                        // Reemplaza comillas dobles por comillas dobles escapadas y envuelve en comillas
                         let cleaned = text.toString().replace(/"/g, '""');
+                        // Adicionalmente, removemos saltos de línea que pueden romper el CSV
                         cleaned = cleaned.replace(/(\r\n|\n|\r)/gm, " ");
                         return `"${cleaned}"`;
                     };
@@ -648,9 +659,10 @@
                         novedad.resolved_by || 'N/A',
                         new Date(novedad.resolved_at).toLocaleString('es-AR')
                     ];
-                    csvRows.push(row.join(';'));
+                    csvRows.push(row.join(';')); // Unimos cada fila con ;
                 });
                 
+                // El BOM (Byte Order Mark) \uFEFF le indica a Excel que es UTF-8
                 const bom = '\uFEFF'; 
                 const csvContent = bom + csvRows.join('\n');
                 
@@ -667,6 +679,7 @@
 
                 mostrarNotificacion('Reporte descargado con éxito.', 'success');
                 
+                // Limpiamos las fechas después de una descarga exitosa
                 startDateInput.value = '';
                 endDateInput.value = '';
 
@@ -678,6 +691,7 @@
                 downloadButton.textContent = 'Descargar Reporte';
             }
         }
+        // >>>>> FIN: FUNCIÓN MEJORADA PARA DESCARGAR REPORTE CSV <<<<<
         
         const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
         const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
@@ -842,3 +856,4 @@
     </script>
 </body>
 </html>
+
