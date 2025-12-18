@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        /* (Todo tu CSS va aquí, sin cambios) */
         /* --- ESTILOS GENERALES Y FONDO --- */
         body { font-family: 'Roboto', sans-serif; background: linear-gradient(-45deg, #2e3440, #3b4252, #434c5e, #4c566a); background-size: 400% 400%; animation: gradientBG 15s ease infinite; color: #eceff4; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
@@ -203,7 +204,7 @@
             padding-top: 20px;
         }
         
-        /* >>>>> INICIO: ESTILOS PARA EL GENERADOR DE REPORTES <<<<< */
+        /* --- ESTILOS PARA EL GENERADOR DE REPORTES --- */
         #report-generator-container {
             background-color: rgba(46, 52, 64, 0.8);
             backdrop-filter: blur(5px);
@@ -250,7 +251,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s;
-            align-self: flex-end; /* Alinear con la parte inferior de los inputs */
+            align-self: flex-end;
         }
         #download-report-button:hover {
             background-color: #b2d89b;
@@ -259,7 +260,6 @@
             background-color: #5e81ac;
             cursor: not-allowed;
         }
-        /* >>>>> FIN: ESTILOS PARA EL GENERADOR DE REPORTES <<<<< */
 
     </style>
 </head>
@@ -273,7 +273,6 @@
             <div class="controles-vias"><input type="search" id="search-box" placeholder="Buscar por número de vía..."><div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div>
             <div class="busqueda-global-container"><div class="busqueda-global-input"><input type="search" id="global-search-box" placeholder="Buscar problema en todas las vías (ej: Contactor, Barrera...)"><button id="global-search-button">Buscar</button></div><div id="global-search-results-container" style="display: none;"><h3>Resultados de la Búsqueda</h3><div class="loader-container" id="global-search-loader" style="display: none;"><div class="spinner"></div></div><ul id="global-search-results-list"></ul><p id="no-global-results-message" style="display: none;">No se encontraron resultados para tu búsqueda.</p></div></div>
             
-            <!-- >>>>> INICIO: PANEL GENERADOR DE REPORTES <<<<< -->
             <div id="report-generator-container" style="display: none;">
                 <h3>Generación de Reportes</h3>
                 <div class="report-controls">
@@ -288,9 +287,7 @@
                     <button id="download-report-button">Descargar Reporte</button>
                 </div>
             </div>
-            <!-- >>>>> FIN: PANEL GENERADOR DE REPORTES <<<<< -->
             
-            <!-- Contenedor para gestión de tareas predeterminadas con acordeón -->
             <div id="admin-tasks-container" class="busqueda-global-container" style="display: none;">
                 <div class="accordion-header">
                     <h3>Gestión de Tareas Predeterminadas</h3>
@@ -433,11 +430,11 @@
             await cargarVias(); 
             if (esAdmin()) { 
                 adminTasksContainer.style.display = 'block'; 
-                reportGeneratorContainer.style.display = 'block'; // Mostrar panel de reportes
+                reportGeneratorContainer.style.display = 'block'; 
                 await cargarYRenderizarTareasPredeterminadas(); 
             } else { 
                 adminTasksContainer.style.display = 'none'; 
-                reportGeneratorContainer.style.display = 'none'; // Ocultar panel de reportes
+                reportGeneratorContainer.style.display = 'none'; 
                 const { data, error } = await supabase.from('tareas_predeterminadas').select('id, descripcion'); 
                 if (!error) { tareasPredeterminadas = data; } 
             } 
@@ -589,7 +586,6 @@
         function actualizarDashboard() { const counts = todasLasVias.reduce((acc, via) => { acc[via.status] = (acc[via.status] || 0) + 1; return acc; }, {}); document.getElementById('stat-count-problema').textContent = counts.problema || 0; document.getElementById('stat-count-revisar').textContent = counts.revisar || 0; document.getElementById('stat-count-normal').textContent = counts.normal || 0; }
         function renderizarControlesPaginacion(currentPage, totalItems, perPage) { const paginationContainer = document.getElementById('historial-pagination'); paginationContainer.innerHTML = ''; const totalPages = Math.ceil(totalItems / perPage); if (totalPages <= 1) return; const prevButton = document.createElement('button'); prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1; prevButton.onclick = () => cargarNovedadesModal(currentPage - 1); const pageInfo = document.createElement('span'); pageInfo.textContent = `Página ${currentPage} de ${totalPages}`; const nextButton = document.createElement('button'); nextButton.textContent = 'Siguiente'; nextButton.disabled = currentPage === totalPages; nextButton.onclick = () => cargarNovedadesModal(currentPage + 1); paginationContainer.append(prevButton, pageInfo, nextButton); }
         
-        // >>>>> INICIO: FUNCIÓN MEJORADA PARA DESCARGAR REPORTE CSV <<<<<
         async function descargarReporteCSV() {
             const startDateInput = document.getElementById('report-start-date');
             const endDateInput = document.getElementById('report-end-date');
@@ -607,7 +603,6 @@
             downloadButton.textContent = 'Generando...';
 
             try {
-                // Ajustamos la fecha final para incluir todo el día
                 const endDateAdjusted = new Date(endDate);
                 endDateAdjusted.setHours(23, 59, 59, 999);
 
@@ -623,32 +618,22 @@
 
                 if (data.length === 0) {
                     mostrarNotificacion('No hay tareas resueltas en el rango de fechas seleccionado.', 'success');
-                    // Limpiamos las fechas aunque no haya datos
                     startDateInput.value = '';
                     endDateInput.value = '';
                     return;
                 }
-
-                // Usamos punto y coma (;) como separador para mejor compatibilidad con Excel
+                
                 const headers = [
-                    'ID Tarea',
-                    'Numero de Via',
-                    'Descripcion',
-                    'Creado Por',
-                    'Fecha de Creacion',
-                    'Resuelto Por',
-                    'Fecha de Resolucion'
+                    'ID Tarea', 'Numero de Via', 'Descripcion', 'Creado Por',
+                    'Fecha de Creacion', 'Resuelto Por', 'Fecha de Resolucion'
                 ];
 
-                const csvRows = [headers.join(';')]; // Unimos cabeceras con ;
+                const csvRows = [headers.join(';')];
 
                 data.forEach(novedad => {
-                    // Función para limpiar texto para CSV
                     const cleanText = (text) => {
                         if (!text) return '';
-                        // Reemplaza comillas dobles por comillas dobles escapadas y envuelve en comillas
                         let cleaned = text.toString().replace(/"/g, '""');
-                        // Adicionalmente, removemos saltos de línea que pueden romper el CSV
                         cleaned = cleaned.replace(/(\r\n|\n|\r)/gm, " ");
                         return `"${cleaned}"`;
                     };
@@ -662,10 +647,9 @@
                         novedad.resolved_by || 'N/A',
                         new Date(novedad.resolved_at).toLocaleString('es-AR')
                     ];
-                    csvRows.push(row.join(';')); // Unimos cada fila con ;
+                    csvRows.push(row.join(';'));
                 });
                 
-                // El BOM (Byte Order Mark) \uFEFF le indica a Excel que es UTF-8
                 const bom = '\uFEFF'; 
                 const csvContent = bom + csvRows.join('\n');
                 
@@ -682,7 +666,6 @@
 
                 mostrarNotificacion('Reporte descargado con éxito.', 'success');
                 
-                // Limpiamos las fechas después de una descarga exitosa
                 startDateInput.value = '';
                 endDateInput.value = '';
 
@@ -694,8 +677,7 @@
                 downloadButton.textContent = 'Descargar Reporte';
             }
         }
-        // >>>>> FIN: FUNCIÓN MEJORADA PARA DESCARGAR REPORTE CSV <<<<<
-
+        
         const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
         const checkUser = async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
         const handleLogout = async () => { if (canalVias) { supabase.removeChannel(canalVias); canalVias = null; } await supabase.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; adminTasksContainer.style.display = 'none'; currentUserEmail = null; currentUserRole = 'operator'; };
@@ -851,7 +833,6 @@
                 });
             }
 
-            // >>>>> LISTENER PARA EL BOTÓN DE DESCARGA DE REPORTES <<<<<
             const downloadReportBtn = document.getElementById('download-report-button');
             if(downloadReportBtn) {
                 downloadReportBtn.addEventListener('click', descargarReporteCSV);
