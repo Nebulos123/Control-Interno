@@ -380,8 +380,17 @@
     <script>
         // --- Configuración y Elementos DOM ---
         const SUPABASE_URL = 'https://ybrwwgkouxdgdfpdofin.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlicnd3Z2tvdXhkZ2RmcGRvZmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjU3MzksImV4cCI6MjA3NTEwMTczOX0.oxBJ8P1lyu8fL6eSFYRatCiP4XRg2xtdUJa8pqjNvxo';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+
+// 🔒 Evitar redeclarar supabase
+        if (!window._supabaseClient) {
+            window._supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+    );
+}
+
+        const supabase = window._supabaseClient;
         
         const loginContainer = document.getElementById('login-container'), mainContent = document.getElementById('main-content'), modal = document.getElementById('modal-via'), searchBox = document.getElementById('search-box'), filterButtons = document.querySelectorAll('.filter-buttons button'), tooltipProblema = document.getElementById('tooltip-problema'), loginForm = document.getElementById('login-form'), loginButton = document.getElementById('login-button'), loginError = document.getElementById('login-error'), logoutButton = document.getElementById('logout-button'), userEmailDisplay = document.getElementById('user-email-display'), userRoleDisplay = document.getElementById('user-role-display'), closeButton = document.querySelector('.close-button'), formNovedad = document.getElementById('form-novedad');
         
@@ -841,3 +850,4 @@
     </script>
 </body>
 </html>
+
