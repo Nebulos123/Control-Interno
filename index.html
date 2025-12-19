@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -380,17 +379,8 @@
     <script>
         // --- Configuración y Elementos DOM ---
         const SUPABASE_URL = 'https://ybrwwgkouxdgdfpdofin.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-
-// 🔒 Evitar redeclarar supabase
-        if (!window._supabaseClient) {
-            window._supabaseClient = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-    );
-}
-
-        const supabase = window._supabaseClient;
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlicnd3Z2tvdXhkZ2RmcGRvZmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjU3MzksImV4cCI6MjA3NTEwMTczOX0.oxBJ8P1lyu8fL6eSFYRatCiP4XRg2xtdUJa8pqjNvxo';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const loginContainer = document.getElementById('login-container'), mainContent = document.getElementById('main-content'), modal = document.getElementById('modal-via'), searchBox = document.getElementById('search-box'), filterButtons = document.querySelectorAll('.filter-buttons button'), tooltipProblema = document.getElementById('tooltip-problema'), loginForm = document.getElementById('login-form'), loginButton = document.getElementById('login-button'), loginError = document.getElementById('login-error'), logoutButton = document.getElementById('logout-button'), userEmailDisplay = document.getElementById('user-email-display'), userRoleDisplay = document.getElementById('user-role-display'), closeButton = document.querySelector('.close-button'), formNovedad = document.getElementById('form-novedad');
         
@@ -412,7 +402,7 @@
         const esAdmin = () => currentUserRole === 'admin';
 
         // --- LÓGICA PARA EL FRASCO DE POROTOS --- (Sin cambios)
-        const MAX_POROTOS = 20; let porotoCount = 0; const porotosContainer = document.getElementById('porotos-container'), porotoCounterDisplay = document.getElementById('poroto-counter'), porotoJar = document.getElementById('poroto-jar'); function addPoroto() { if (porotoCount >= MAX_POROTOS) return; porotoCount++; localStorage.setItem('porotoCount', porotoCount); const poroto = document.createElement('div'); poroto.className = 'poroto'; porotosContainer.appendChild(poroto); updatePorotoCounter(); if (porotoCount === MAX_POROTOS) { porotoJar.classList.add('jar-full-animation'); mostrarNotificacion('¡Frasco lleno! Buen trabajo equipo. 🎉', 'success'); setTimeout(resetJar, 2000); } } function resetJar() { porotoJar.classList.remove('jar-full-animation'); const porotos = porotosContainer.querySelectorAll('.poroto'); porotos.forEach(p => p.classList.add('poroto-exit')); setTimeout(() => { porotosContainer.innerHTML = ''; porotoCount = 0; localStorage.setItem('porotoCount', 0); updatePorotoCounter(); }, 500); } function updatePorotoCounter() { porotoCounterDisplay.textContent = `${porotoCount} / ${MAX_POROTOS}`; } function renderJarState() { const savedCount = parseInt(localStorage.getItem('porotoCount')) || 0; porotoCount = savedCount; porotosContainer.innerHTML = ''; for (let i = 0; i < porotoCount; i++) { const poroto = document.createElement('div'); poroto.className = 'poroto'; poroto.style.animation = 'none'; porotosContainer.appendChild(poroto); } updatePorotoCounter(); }
+        const MAX_POROTOS = 20; let porotoCount = 0; const porotosContainer = document.getElementById('porotos-container'), porotoCounterDisplay = document.getElementById('poroto-counter'), porotoJar = document.getElementById('poroto-jar'); function addPoroto() { if (porotoCount >= MAX_POROTOS) return; porotoCount++; localStorage.setItem('porotoCount', porotoCount); const poroto = document.createElement('div'); poroto.className = 'poroto'; porotosContainer.appendChild(poroto); updatePorotoCounter(); if (porotoCount === MAX_POROTOS) { porotoJar.classList.add('jar-full-animation'); mostrarNotificacion('¡Frasco lleno! Buen trabajo equipo. ??', 'success'); setTimeout(resetJar, 2000); } } function resetJar() { porotoJar.classList.remove('jar-full-animation'); const porotos = porotosContainer.querySelectorAll('.poroto'); porotos.forEach(p => p.classList.add('poroto-exit')); setTimeout(() => { porotosContainer.innerHTML = ''; porotoCount = 0; localStorage.setItem('porotoCount', 0); updatePorotoCounter(); }, 500); } function updatePorotoCounter() { porotoCounterDisplay.textContent = `${porotoCount} / ${MAX_POROTOS}`; } function renderJarState() { const savedCount = parseInt(localStorage.getItem('porotoCount')) || 0; porotoCount = savedCount; porotosContainer.innerHTML = ''; for (let i = 0; i < porotoCount; i++) { const poroto = document.createElement('div'); poroto.className = 'poroto'; poroto.style.animation = 'none'; porotosContainer.appendChild(poroto); } updatePorotoCounter(); }
 
         // --- LÓGICA DE TOOLTIPS --- (Sin cambios, usa datos locales)
         function mostrarTooltip(viaId, targetElement, status) {
@@ -535,7 +525,7 @@
         }
         async function guardarModeloBarrera() { const botonGuardar = document.getElementById('guardar-modelo-barrera'); const nuevoModelo = document.getElementById('modelo-barrera-input').value.trim(); if (!viaActualModal) return; botonGuardar.disabled = true; botonGuardar.textContent = 'Guardando...'; try { const { error } = await supabase.from('vias').update({ modelo_barrera: nuevoModelo }).eq('id', viaActualModal.id); if (error) throw error; viaActualModal.modelo_barrera = nuevoModelo; mostrarNotificacion('Modelo de barrera actualizado con éxito.', 'success'); } catch (error) { console.error('Error al guardar el modelo de la barrera:', error); mostrarNotificacion('No se pudo guardar el modelo de la barrera.', 'error'); } finally { botonGuardar.disabled = false; botonGuardar.textContent = 'Guardar Modelo'; } }
         async function cargarNovedadesModal(historialPage = 1) { const listaPendientes = document.getElementById('lista-pendientes'), listaHistorial = document.getElementById('lista-historial'), loaders = document.querySelectorAll('.novedades-container .loader-container'); loaders.forEach(l => l.style.display = 'flex'); listaPendientes.innerHTML = ''; listaHistorial.innerHTML = ''; try { const { data: pendientes, error: errPend } = await supabase.from('novedades').select('*').eq('via_id', viaActualModal.id).eq('resuelta', false).order('created_at', { ascending: true }); if (errPend) throw errPend; if (pendientes.length > 0) { pendientes.forEach(n => listaPendientes.appendChild(crearItemNovedad(n, false))); } else { listaPendientes.innerHTML = '<li>No hay tareas pendientes.</li>'; } const NOVEDADES_PER_PAGE = 5, from = (historialPage - 1) * NOVEDADES_PER_PAGE, to = from + NOVEDADES_PER_PAGE - 1, textoBusqueda = document.getElementById('historial-search').value.trim(), fechaSeleccionada = document.getElementById('historial-date-picker').value; let queryHistorial = supabase.from('novedades').select('*', { count: 'exact' }).eq('via_id', viaActualModal.id).eq('resuelta', true); if (textoBusqueda) queryHistorial = queryHistorial.ilike('descripcion', `%${textoBusqueda}%`); if (fechaSeleccionada) { const fechaInicio = `${fechaSeleccionada}T00:00:00`, fechaFin = `${fechaSeleccionada}T23:59:59`; queryHistorial = queryHistorial.gte('created_at', fechaInicio).lte('created_at', fechaFin); } const { data: resueltas, count, error: errRes } = await queryHistorial.order('created_at', { ascending: false }).range(from, to); if (errRes) throw errRes; if (resueltas.length > 0) { resueltas.forEach(n => listaHistorial.appendChild(crearItemNovedad(n, true))); } else { listaHistorial.innerHTML = '<li>No hay historial de tareas resueltas.</li>'; } renderizarControlesPaginacion(historialPage, count, NOVEDADES_PER_PAGE); } catch (error) { console.error("Error cargando novedades:", error); mostrarNotificacion('Error al cargar las tareas.', 'error'); } finally { loaders.forEach(l => l.style.display = 'none'); } }
-        function crearItemNovedad(novedad, esResuelta) { const item = document.createElement('li'); item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente'; item.dataset.novedadId = novedad.id; const fechaCreacion = new Date(novedad.created_at).toLocaleString('es-AR'); let infoAuditoria = ''; if (esResuelta && novedad.resolved_at && novedad.resolved_by) { const fechaResolucion = new Date(novedad.resolved_at).toLocaleString('es-AR'); infoAuditoria = `<span class="meta-info resuelta-info">Resuelta por ${novedad.resolved_by} el ${fechaResolucion}</span>`; } let botonesAccion = ''; const puedeEditar = esAdmin() || novedad.user_email === currentUserEmail; if (!esResuelta) { botonesAccion += `<button class="btn-resolver" title="Marcar como Resuelta">✔️</button>`; } if (puedeEditar) { botonesAccion += `<button class="btn-editar" title="Editar">✏️</button>`; } if (esAdmin()) { botonesAccion += `<button class="btn-eliminar" title="Eliminar">🗑️</button>`; } item.innerHTML = `<div class="novedad-contenido"><span class="meta-info">Creada por ${novedad.user_email || 'Sistema'} el ${fechaCreacion}</span>${infoAuditoria}<p class="descripcion-texto">${novedad.descripcion}</p></div><div class="novedad-acciones">${botonesAccion}</div>`; return item; }
+        function crearItemNovedad(novedad, esResuelta) { const item = document.createElement('li'); item.className = esResuelta ? 'novedad-resuelta' : 'novedad-pendiente'; item.dataset.novedadId = novedad.id; const fechaCreacion = new Date(novedad.created_at).toLocaleString('es-AR'); let infoAuditoria = ''; if (esResuelta && novedad.resolved_at && novedad.resolved_by) { const fechaResolucion = new Date(novedad.resolved_at).toLocaleString('es-AR'); infoAuditoria = `<span class="meta-info resuelta-info">Resuelta por ${novedad.resolved_by} el ${fechaResolucion}</span>`; } let botonesAccion = ''; const puedeEditar = esAdmin() || novedad.user_email === currentUserEmail; if (!esResuelta) { botonesAccion += `<button class="btn-resolver" title="Marcar como Resuelta">??</button>`; } if (puedeEditar) { botonesAccion += `<button class="btn-editar" title="Editar">??</button>`; } if (esAdmin()) { botonesAccion += `<button class="btn-eliminar" title="Eliminar">???</button>`; } item.innerHTML = `<div class="novedad-contenido"><span class="meta-info">Creada por ${novedad.user_email || 'Sistema'} el ${fechaCreacion}</span>${infoAuditoria}<p class="descripcion-texto">${novedad.descripcion}</p></div><div class="novedad-acciones">${botonesAccion}</div>`; return item; }
         
         async function resolverNovedad(novedadId) {
             const { data: { user } } = await supabase.auth.getUser();
@@ -544,7 +534,7 @@
             const { error } = await supabase.from('novedades').update(updatePayload).eq('id', novedadId);
             if (error) { mostrarNotificacion('Error al resolver la tarea.', 'error'); return; }
             addPoroto();
-            mostrarNotificacion('Muy Bien, ¡te ganaste 1 poroto! 🥳');
+            mostrarNotificacion('Muy Bien, ¡te ganaste 1 poroto! ??');
             const { count } = await supabase.from('novedades').select('*', { count: 'exact', head: true }).eq('via_id', viaActualModal.id).eq('resuelta', false);
             if (count === 0 && viaActualModal.status !== 'normal') {
                 const { error: updateError } = await supabase.from('vias').update({ status: 'normal' }).eq('id', viaActualModal.id);
@@ -723,7 +713,7 @@
                 
                 if (marcarComoResuelta) {
                     addPoroto();
-                    mostrarNotificacion('Tarea agregada y resuelta. ¡Te ganaste 1 poroto! 🥳');
+                    mostrarNotificacion('Tarea agregada y resuelta. ¡Te ganaste 1 poroto! ??');
                 } else {
                     mostrarNotificacion('Tarea agregada con éxito!');
                 }
