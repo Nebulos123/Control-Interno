@@ -841,14 +841,14 @@
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-const SUPABASE_URL = 'https://ybrwwgkouxdgdfpdofin.supabase.co';
-const SUPABASE_KEY = 'REEMPLAZA_CON_TU_ANON_KEY';
+const SUPABASE_URL = "https://ybrwwgkouxdgdfpdofin.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlicnd3Z2tvdXhkZ2RmcGRvZmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjU3MzksImV4cCI6MjA3NTEwMTczOX0.oxBJ8P1lyu8fL6eSFYRatCiP4XRg2xtdUJa8pqjNvxo";
 
-// Cliente único sin colisiones globales
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+// 👉 Crear cliente
+const client = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Exponer solo si tu código existente lo usa globalmente
-window.sb = sb;
+// 👉 Exponerlo EXACTAMENTE como tu app lo espera
+window.supabase = client;
 </script>
 
 </body>
