@@ -1,5 +1,4 @@
-<script>
-        // --- Configuración y Elementos DOM ---
+       // --- Configuración y Elementos DOM ---
         const SUPABASE_URL = 'https://ybrwwgkouxdgdfpdofin.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlicnd3Z2tvdXhkZ2RmcGRvZmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjU3MzksImV4cCI6MjA3NTEwMTczOX0.oxBJ8P1lyu8fL6eSFYRatCiP4XRg2xtdUJa8pqjNvxo';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -459,4 +458,3 @@
                 downloadReportBtn.addEventListener('click', descargarReporteCSV);
             }
         });
-    </script>
