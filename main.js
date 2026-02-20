@@ -1,4 +1,3 @@
-// --- Configuración y Elementos DOM ---
 const SUPABASE_URL = 'https://ybrwwgkouxdgdfpdofin.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlicnd3Z2tvdXhkZ2RmcGRvZmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjU3MzksImV4cCI6MjA3NTEwMTczOX0.oxBJ8P1lyu8fL6eSFYRatCiP4XRg2xtdUJa8pqjNvxo';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -15,7 +14,8 @@ const adminTasksContainer = document.getElementById('admin-tasks-container'),
 
 const reportGeneratorContainer = document.getElementById('report-generator-container');
     
-let currentUserEmail = null, currentUserRole = 'operator', canalVias = null, todasLasVias = [], viaActualModal = null;
+// >>>>> LÍNEA CORREGIDA: Se añade filtroActivo <<<<<
+let currentUserEmail = null, currentUserRole = 'operator', filtroActivo = 'todos', canalVias = null, todasLasVias = [], viaActualModal = null;
 let tareasPredeterminadas = [];
 let tareasPendientes = [];
 let tooltipTimer = null; 
@@ -24,12 +24,38 @@ const esAdmin = () => currentUserRole === 'admin';
 
 const MAX_POROTOS = 20; let porotoCount = 0; const porotosContainer = document.getElementById('porotos-container'), porotoCounterDisplay = document.getElementById('poroto-counter'), porotoJar = document.getElementById('poroto-jar'); function addPoroto() { if (porotoCount >= MAX_POROTOS) return; porotoCount++; localStorage.setItem('porotoCount', porotoCount); const poroto = document.createElement('div'); poroto.className = 'poroto'; porotosContainer.appendChild(poroto); updatePorotoCounter(); if (porotoCount === MAX_POROTOS) { porotoJar.classList.add('jar-full-animation'); mostrarNotificacion('¡Frasco lleno! Buen trabajo equipo. 🎉', 'success'); setTimeout(resetJar, 2000); } } function resetJar() { porotoJar.classList.remove('jar-full-animation'); const porotos = porotosContainer.querySelectorAll('.poroto'); porotos.forEach(p => p.classList.add('poroto-exit')); setTimeout(() => { porotosContainer.innerHTML = ''; porotoCount = 0; localStorage.setItem('porotoCount', 0); updatePorotoCounter(); }, 500); } function updatePorotoCounter() { porotoCounterDisplay.textContent = `${porotoCount} / ${MAX_POROTOS}`; } function renderJarState() { const savedCount = parseInt(localStorage.getItem('porotoCount')) || 0; porotoCount = savedCount; porotosContainer.innerHTML = ''; for (let i = 0; i < porotoCount; i++) { const poroto = document.createElement('div'); poroto.className = 'poroto'; poroto.style.animation = 'none'; porotosContainer.appendChild(poroto); } updatePorotoCounter(); }
 
-async function mostrarTooltip(viaId, targetElement, status) { tooltipProblema.className = `tooltip-${status}`; const { data, error } = await supabaseClient.from('novedades').select('descripcion').eq('via_id', viaId).eq('resuelta', false).order('created_at', { ascending: false }).limit(1).single(); if (error || !data) { tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>'; } else { tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${data.descripcion}`; } const rect = targetElement.getBoundingClientRect(); tooltipProblema.style.left = `${rect.left + window.scrollX}px`; tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`; tooltipProblema.classList.add('visible'); } function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
+function mostrarTooltip(viaId, targetElement, status) {
+    tooltipProblema.className = `tooltip-${status}`;
+    const tareasDeLaVia = tareasPendientes.filter(t => t.via_id === viaId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (tareasDeLaVia.length === 0) {
+        tooltipProblema.innerHTML = '<strong>No hay tareas pendientes.</strong>';
+    } else {
+        tooltipProblema.innerHTML = `<strong>Última Tarea Pendiente:</strong> ${tareasDeLaVia[0].descripcion}`;
+    }
+    const rect = targetElement.getBoundingClientRect();
+    tooltipProblema.style.left = `${rect.left + window.scrollX}px`;
+    tooltipProblema.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    tooltipProblema.classList.add('visible');
+}
+function ocultarTooltip() { tooltipProblema.classList.remove('visible'); }
 
 async function cargarYRenderizarTareasPredeterminadas() { if (!esAdmin()) return; presetTasksLoader.style.display = 'flex'; presetTasksList.innerHTML = ''; try { const { data, error } = await supabaseClient.from('tareas_predeterminadas').select('id, descripcion').order('descripcion', { ascending: true }); if (error) throw error; tareasPredeterminadas = data; if (data.length === 0) { presetTasksList.innerHTML = '<li>No hay tareas predeterminadas.</li>'; } else { data.forEach(task => { const li = document.createElement('li'); li.innerHTML = `<span>${task.descripcion}</span><button data-id="${task.id}" class="delete-preset-task">Eliminar</button>`; presetTasksList.appendChild(li); }); } } catch (error) { console.error("Error al cargar tareas predeterminadas:", error); mostrarNotificacion("No se pudieron cargar las tareas predeterminadas.", "error"); } finally { presetTasksLoader.style.display = 'none'; } }
 async function agregarTareaPredeterminada() { const descripcion = newPresetTaskInput.value.trim(); if (!descripcion) { mostrarNotificacion("La descripción no puede estar vacía.", "error"); return; } addPresetTaskButton.disabled = true; try { const { error } = await supabaseClient.from('tareas_predeterminadas').insert([{ descripcion }]); if (error) throw error; mostrarNotificacion("Tarea predeterminada agregada.", "success"); newPresetTaskInput.value = ''; } catch (error) { console.error("Error al agregar tarea predeterminada:", error); mostrarNotificacion("Error al guardar la tarea.", "error"); } finally { addPresetTaskButton.disabled = false; } }
 async function eliminarTareaPredeterminada(id) { if (!confirm("¿Seguro que quieres eliminar esta tarea predeterminada?")) return; try { const { error } = await supabaseClient.from('tareas_predeterminadas').delete().eq('id', id); if (error) throw error; mostrarNotificacion("Tarea predeterminada eliminada.", "success"); } catch (error) { console.error("Error al eliminar tarea predeterminada:", error); mostrarNotificacion("Error al eliminar la tarea.", "error"); } }
-async function inicializarPanelesYDatos() { await cargarVias(); if (esAdmin()) { adminTasksContainer.style.display = 'block'; reportGeneratorContainer.style.display = 'block'; await cargarYRenderizarTareasPredeterminadas(); } else { adminTasksContainer.style.display = 'none'; reportGeneratorContainer.style.display = 'none'; const { data, error } = await supabaseClient.from('tareas_predeterminadas').select('id, descripcion'); if (!error) { tareasPredeterminadas = data; } } }
+
+async function inicializarPanelesYDatos() { 
+    await cargarVias(); 
+    if (esAdmin()) { 
+        adminTasksContainer.style.display = 'block'; 
+        reportGeneratorContainer.style.display = 'block'; 
+        await cargarYRenderizarTareasPredeterminadas(); 
+    } else { 
+        adminTasksContainer.style.display = 'none'; 
+        reportGeneratorContainer.style.display = 'none'; 
+        const { data, error } = await supabaseClient.from('tareas_predeterminadas').select('id, descripcion'); 
+        if (!error) { tareasPredeterminadas = data; } 
+    } 
+}
 
 async function cargarVias() {
     document.querySelectorAll('.grupo-vias .loader-container').forEach(loader => loader.style.display = 'flex');
@@ -427,4 +453,3 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadReportBtn.addEventListener('click', descargarReporteCSV);
     }
 });
-
