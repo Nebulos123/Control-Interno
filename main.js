@@ -409,85 +409,6 @@ function escucharCambiosVias() {
         });
 }
 
-// ======================================================
-// ============ INICIO: LÓGICA GESTIÓN DE MÓVILES =======
-// ======================================================
-
-// --- VARIABLES Y ELEMENTOS DEL DOM PARA MÓVILES ---
-let moviles = []; // Array para almacenar los datos de los móviles.
-
-const openMovilesModalBtn = document.getElementById('open-moviles-modal-btn');
-const modalMoviles = document.getElementById('modal-moviles');
-const closeModalMovilesBtn = modalMoviles.querySelector('.close-button');
-const btnAgregarMovil = document.getElementById('btn-agregar-movil');
-const selectMovil = document.getElementById('select-movil');
-const infoMovilSeleccionado = document.getElementById('info-movil-seleccionado');
-const infoPatente = document.getElementById('info-patente');
-const formCargaCombustible = document.getElementById('form-carga-combustible');
-const inputTicket = document.getElementById('input-ticket');
-const inputKilometraje = document.getElementById('input-kilometraje');
-const historialCargas = document.getElementById('historial-cargas');
-
-// --- FUNCIONES PARA MÓVILES ---
-
-function cargarDatosMoviles() {
-    const movilesGuardados = localStorage.getItem('movilesSector');
-    if (movilesGuardados) {
-        moviles = JSON.parse(movilesGuardados);
-    }
-}
-
-function guardarDatosMoviles() {
-    localStorage.setItem('movilesSector', JSON.stringify(moviles));
-}
-
-function renderizarDetallesMovil() {
-    const nombreMovilSeleccionado = selectMovil.value;
-    const movil = moviles.find(m => m.nombre === nombreMovilSeleccionado);
-
-    if (movil) {
-        infoMovilSeleccionado.style.display = 'block';
-        infoPatente.textContent = movil.patente;
-        historialCargas.innerHTML = '';
-
-        if (movil.cargasCombustible && movil.cargasCombustible.length > 0) {
-            movil.cargasCombustible.slice().reverse().forEach(carga => {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>Ticket:</strong> ${carga.ticket} - <strong>KM:</strong> ${carga.kilometraje}`;
-                historialCargas.appendChild(li);
-            });
-        } else {
-            historialCargas.innerHTML = '<li>No hay cargas registradas para este móvil.</li>';
-        }
-    } else {
-        infoMovilSeleccionado.style.display = 'none';
-    }
-}
-
-function renderizarSelectMoviles() {
-    selectMovil.innerHTML = '';
-
-    if (moviles.length > 0) {
-        moviles.forEach(movil => {
-            const option = document.createElement('option');
-            option.value = movil.nombre;
-            option.textContent = movil.nombre;
-            selectMovil.appendChild(option);
-        });
-    } else {
-        const option = document.createElement('option');
-        option.textContent = 'No hay móviles cargados';
-        option.disabled = true;
-        selectMovil.appendChild(option);
-    }
-    
-    renderizarDetallesMovil();
-}
-
-// ======================================================
-// ============= FIN: LÓGICA GESTIÓN DE MÓVILES =========
-// ======================================================
-
 
 document.addEventListener('DOMContentLoaded', () => { 
     document.getElementById('footer-year').textContent = new Date().getFullYear(); 
@@ -532,10 +453,76 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadReportBtn.addEventListener('click', descargarReporteCSV);
     }
 
-    // ======================================================
-    // ====== INICIO: INICIALIZACIÓN Y EVENTOS DE MÓVILES ======
-    // ======================================================
-    cargarDatosMoviles(); // Carga los datos de los móviles al iniciar la app.
+    // =========================================================================
+    // ====== CORRECCIÓN: INICIALIZACIÓN Y EVENTOS DE MÓVILES (MOVIDO AQUÍ) =====
+    // =========================================================================
+
+    // --- Array para los móviles
+    let moviles = [];
+
+    // --- Se declaran las variables de los elementos del DOM AHORA, que ya existen.
+    const openMovilesModalBtn = document.getElementById('open-moviles-modal-btn');
+    const modalMoviles = document.getElementById('modal-moviles');
+    const closeModalMovilesBtn = modalMoviles.querySelector('.close-button');
+    const btnAgregarMovil = document.getElementById('btn-agregar-movil');
+    const selectMovil = document.getElementById('select-movil');
+    const infoMovilSeleccionado = document.getElementById('info-movil-seleccionado');
+    const infoPatente = document.getElementById('info-patente');
+    const formCargaCombustible = document.getElementById('form-carga-combustible');
+    const inputTicket = document.getElementById('input-ticket');
+    const inputKilometraje = document.getElementById('input-kilometraje');
+    const historialCargas = document.getElementById('historial-cargas');
+
+    // --- Funciones de Móviles (pueden definirse aquí o fuera, pero es más limpio aquí)
+    const cargarDatosMoviles = () => {
+        const movilesGuardados = localStorage.getItem('movilesSector');
+        if (movilesGuardados) {
+            moviles = JSON.parse(movilesGuardados);
+        }
+    };
+    const guardarDatosMoviles = () => {
+        localStorage.setItem('movilesSector', JSON.stringify(moviles));
+    };
+    const renderizarDetallesMovil = () => {
+        const nombreMovilSeleccionado = selectMovil.value;
+        const movil = moviles.find(m => m.nombre === nombreMovilSeleccionado);
+        if (movil) {
+            infoMovilSeleccionado.style.display = 'block';
+            infoPatente.textContent = movil.patente;
+            historialCargas.innerHTML = '';
+            if (movil.cargasCombustible && movil.cargasCombustible.length > 0) {
+                movil.cargasCombustible.slice().reverse().forEach(carga => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>Ticket:</strong> ${carga.ticket} - <strong>KM:</strong> ${carga.kilometraje}`;
+                    historialCargas.appendChild(li);
+                });
+            } else {
+                historialCargas.innerHTML = '<li>No hay cargas registradas para este móvil.</li>';
+            }
+        } else {
+            infoMovilSeleccionado.style.display = 'none';
+        }
+    };
+    const renderizarSelectMoviles = () => {
+        selectMovil.innerHTML = '';
+        if (moviles.length > 0) {
+            moviles.forEach(movil => {
+                const option = document.createElement('option');
+                option.value = movil.nombre;
+                option.textContent = movil.nombre;
+                selectMovil.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.textContent = 'No hay móviles cargados';
+            option.disabled = true;
+            selectMovil.appendChild(option);
+        }
+        renderizarDetallesMovil();
+    };
+
+    // --- Carga inicial y Event Listeners de Móviles
+    cargarDatosMoviles();
 
     openMovilesModalBtn.addEventListener('click', () => {
         modalMoviles.style.display = 'block';
@@ -546,7 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalMoviles.style.display = 'none';
     });
     
-    // Añadimos el listener para cerrar el modal de móviles al hacer click afuera
     window.addEventListener('click', (event) => {
         if (event.target === modalMoviles) {
             modalMoviles.style.display = 'none';
@@ -556,27 +542,22 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAgregarMovil.addEventListener('click', () => {
         const nombre = prompt('Ingrese el nombre del nuevo móvil (ej: MOVIL RICCHERI):');
         if (!nombre || nombre.trim() === "") return;
-
         const patente = prompt(`Ingrese la patente para ${nombre}:`);
         if (!patente || patente.trim() === "") return;
-        
         const nombreNormalizado = nombre.trim().toUpperCase();
         if (moviles.some(m => m.nombre === nombreNormalizado)) {
             mostrarNotificacion('Error: Ya existe un móvil con ese nombre.', 'error');
             return;
         }
-
         const nuevoMovil = {
             nombre: nombreNormalizado,
             patente: patente.trim().toUpperCase(),
             cargasCombustible: []
         };
-
         moviles.push(nuevoMovil);
         moviles.sort((a, b) => a.nombre.localeCompare(b.nombre));
         guardarDatosMoviles();
         renderizarSelectMoviles();
-        
         selectMovil.value = nuevoMovil.nombre;
         renderizarDetallesMovil();
         mostrarNotificacion(`Móvil "${nuevoMovil.nombre}" agregado correctamente.`);
@@ -588,29 +569,24 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const nombreMovilSeleccionado = selectMovil.value;
         const movil = moviles.find(m => m.nombre === nombreMovilSeleccionado);
-
         if (!movil) {
             mostrarNotificacion('Error: Por favor, seleccione un móvil válido.', 'error');
             return;
         }
-        
         const ticket = inputTicket.value.trim();
         const kilometraje = inputKilometraje.value;
-
         if (!ticket || !kilometraje) {
             mostrarNotificacion('Error: Ticket y kilometraje son obligatorios.', 'error');
             return;
         }
-
         const nuevaCarga = { ticket: ticket, kilometraje: parseInt(kilometraje) };
-        
         movil.cargasCombustible.push(nuevaCarga);
         guardarDatosMoviles();
         renderizarDetallesMovil();
         formCargaCombustible.reset();
         mostrarNotificacion('Carga de combustible registrada.');
     });
-    // ======================================================
-    // ======== FIN: INICIALIZACIÓN Y EVENTOS DE MÓVILES ========
-    // ======================================================
+    // =========================================================================
+    // ============================= FIN DE LA CORRECCIÓN ======================
+    // =========================================================================
 });
