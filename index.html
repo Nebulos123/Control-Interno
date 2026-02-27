@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -259,6 +260,75 @@
             background-color: #5e81ac;
             cursor: not-allowed;
         }
+        
+        /* ====================================================== */
+        /* =========== NUEVOS ESTILOS GESTIÓN DE MÓVILES ========== */
+        /* ====================================================== */
+        #moviles-management-container {
+            background-color: rgba(46, 52, 64, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+        }
+        #moviles-management-container h3 {
+             margin-top: 0;
+             border-bottom: 2px solid #5e81ac;
+             padding-bottom: 10px;
+             margin-bottom: 20px;
+        }
+        #open-moviles-modal-btn {
+            padding: 12px 20px;
+            background-color: #88c0d0;
+            border: none;
+            border-radius: 5px;
+            color: #2e3440;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #open-moviles-modal-btn:hover {
+            background-color: #8fbcbb;
+        }
+        .modal-moviles-section {
+            padding: 15px;
+            border: 1px solid #d8dee9;
+            border-radius: 6px;
+            background-color: #e5e9f0;
+            margin-bottom: 20px;
+        }
+        #form-carga-combustible {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        #form-carga-combustible input {
+            flex-grow: 1;
+        }
+        #form-carga-combustible button {
+            flex-grow: 0;
+            background-color: #a3be8c;
+        }
+        #historial-cargas {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #d8dee9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            background-color: #fff;
+        }
+        #historial-cargas li {
+            padding: 8px;
+            border-bottom: 1px solid #d8dee9;
+        }
+        #historial-cargas li:last-child {
+            border-bottom: none;
+        }
 
     </style>
 </head>
@@ -271,6 +341,14 @@
             <div class="dashboard-stats"><div class="stat-box" id="stat-problema"><h3>Con Problema</h3><div class="stat-number" id="stat-count-problema">0</div></div><div class="stat-box" id="stat-revisar"><h3>Para Revisar</h3><div class="stat-number" id="stat-count-revisar">0</div></div><div class="stat-box" id="stat-normal"><h3>Normales</h3><div class="stat-number" id="stat-count-normal">0</div></div></div>
             <div class="controles-vias"><input type="search" id="search-box" placeholder="Buscar por número de vía..."><div class="filter-buttons"><button id="filter-todos" class="active">Todos</button><button id="filter-normal">Normal</button><button id="filter-revisar">Revisar</button><button id="filter-problema">Problema</button></div></div>
             <div class="busqueda-global-container"><div class="busqueda-global-input"><input type="search" id="global-search-box" placeholder="Buscar problema en todas las vías (ej: Contactor, Barrera...)"><button id="global-search-button">Buscar</button></div><div id="global-search-results-container" style="display: none;"><h3>Resultados de la Búsqueda</h3><div class="loader-container" id="global-search-loader" style="display: none;"><div class="spinner"></div></div><ul id="global-search-results-list"></ul><p id="no-global-results-message" style="display: none;">No se encontraron resultados para tu búsqueda.</p></div></div>
+            
+            <!-- ====================================================== -->
+            <!-- ========= NUEVO CONTENEDOR GESTIÓN DE MÓVILES ========== -->
+            <!-- ====================================================== -->
+            <div id="moviles-management-container">
+                <h3>Gestión de Móviles del Sector</h3>
+                <button id="open-moviles-modal-btn">Administrar Móviles</button>
+            </div>
             
             <div id="report-generator-container" style="display: none;">
                 <h3>Generación de Reportes</h3>
@@ -361,6 +439,43 @@
             </div>
         </div>
     </div>
+    
+    <!-- ====================================================== -->
+    <!-- ============== NUEVO MODAL GESTIÓN DE MÓVILES ========== -->
+    <!-- ====================================================== -->
+    <div id="modal-moviles" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Administración de Móviles</h2>
+            <div class="modal-body">
+                <div class="modal-moviles-section">
+                    <h3>Control de Móviles</h3>
+                    <button type="button" id="btn-agregar-movil" style="background-color: #88c0d0; color: #2e3440; margin-bottom: 20px;">Agregar Nuevo Móvil</button>
+                    
+                    <label for="select-movil">Seleccionar Móvil:</label>
+                    <select id="select-movil"></select>
+                </div>
+                
+                <div id="info-movil-seleccionado" class="modal-moviles-section" style="display: none;">
+                    <h3>Información y Cargas</h3>
+                    <p><strong>Patente:</strong> <span id="info-patente" style="font-weight: bold; color: #5e81ac;"></span></p>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">Cargar Combustible</h4>
+                    <form id="form-carga-combustible">
+                        <input type="text" id="input-ticket" placeholder="Nº de Ticket" required>
+                        <input type="number" id="input-kilometraje" placeholder="Kilometraje" required>
+                        <button type="submit">Agregar</button>
+                    </form>
+
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">Historial de Cargas</h4>
+                    <ul id="historial-cargas">
+                        <!-- El historial se generará con JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <div id="toast-container"></div>
     <div id="tooltip-problema"></div>
