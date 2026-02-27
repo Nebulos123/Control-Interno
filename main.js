@@ -293,8 +293,185 @@ async function descargarReporteCSV() {
     }
 }
 
-const handleLogin = async (event) => { event.preventDefault(); loginButton.disabled = true; loginButton.textContent = 'Accediendo...'; loginError.style.display = 'none'; const email = document.getElementById('email').value, password = document.getElementById('password').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; const { data: profile, error: profileError } = await supabaseClient.from('profiles').select('role').eq('id', data.user.id).single(); if (profileError) throw profileError; loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = data.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } catch (error) { console.error('Error de login:', error.message); loginError.style.display = 'block'; mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); } finally { loginButton.disabled = false; loginButton.textContent = 'Acceder'; } };
-const checkUser = async () => { const { data: { session } } = await supabaseClient.auth.getSession(); if (session) { const { data: profile, error: profileError } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single(); if (profileError) { await handleLogout(); return; } loginContainer.style.display = 'none'; mainContent.style.display = 'block'; currentUserEmail = session.user.email; currentUserRole = profile.role || 'operator'; userEmailDisplay.textContent = currentUserEmail; userRoleDisplay.textContent = currentUserRole; await inicializarPanelesYDatos(); escucharCambiosVias(); } else { loginContainer.style.display = 'block'; mainContent.style.display = 'none'; } };
+// =========================================================================
+// ====== INICIO: NUEVA FUNCIÓN PARA INICIALIZAR GESTIÓN DE MÓVILES =======
+// =========================================================================
+let movilesInicializado = false;
+function inicializarGestionMoviles() {
+    if (movilesInicializado) return; // Evita que se inicialice más de una vez
+
+    let moviles = [];
+
+    const openMovilesModalBtn = document.getElementById('open-moviles-modal-btn');
+    const modalMoviles = document.getElementById('modal-moviles');
+    const closeModalMovilesBtn = modalMoviles.querySelector('.close-button');
+    const btnAgregarMovil = document.getElementById('btn-agregar-movil');
+    const selectMovil = document.getElementById('select-movil');
+    const infoMovilSeleccionado = document.getElementById('info-movil-seleccionado');
+    const infoPatente = document.getElementById('info-patente');
+    const formCargaCombustible = document.getElementById('form-carga-combustible');
+    const inputTicket = document.getElementById('input-ticket');
+    const inputKilometraje = document.getElementById('input-kilometraje');
+    const historialCargas = document.getElementById('historial-cargas');
+
+    const cargarDatosMoviles = () => {
+        const movilesGuardados = localStorage.getItem('movilesSector');
+        if (movilesGuardados) moviles = JSON.parse(movilesGuardados);
+    };
+    const guardarDatosMoviles = () => {
+        localStorage.setItem('movilesSector', JSON.stringify(moviles));
+    };
+    const renderizarDetallesMovil = () => {
+        const nombreMovilSeleccionado = selectMovil.value;
+        const movil = moviles.find(m => m.nombre === nombreMovilSeleccionado);
+        if (movil) {
+            infoMovilSeleccionado.style.display = 'block';
+            infoPatente.textContent = movil.patente;
+            historialCargas.innerHTML = '';
+            if (movil.cargasCombustible && movil.cargasCombustible.length > 0) {
+                movil.cargasCombustible.slice().reverse().forEach(carga => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>Ticket:</strong> ${carga.ticket} - <strong>KM:</strong> ${carga.kilometraje}`;
+                    historialCargas.appendChild(li);
+                });
+            } else {
+                historialCargas.innerHTML = '<li>No hay cargas registradas.</li>';
+            }
+        } else {
+            infoMovilSeleccionado.style.display = 'none';
+        }
+    };
+    const renderizarSelectMoviles = () => {
+        selectMovil.innerHTML = '';
+        if (moviles.length > 0) {
+            moviles.forEach(movil => {
+                const option = document.createElement('option');
+                option.value = movil.nombre;
+                option.textContent = movil.nombre;
+                selectMovil.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.textContent = 'No hay móviles cargados';
+            option.disabled = true;
+            selectMovil.appendChild(option);
+        }
+        renderizarDetallesMovil();
+    };
+
+    cargarDatosMoviles();
+
+    openMovilesModalBtn.addEventListener('click', () => {
+        modalMoviles.style.display = 'block';
+        renderizarSelectMoviles();
+    });
+    closeModalMovilesBtn.addEventListener('click', () => {
+        modalMoviles.style.display = 'none';
+    });
+    window.addEventListener('click', (event) => {
+        if (event.target === modalMoviles) {
+            modalMoviles.style.display = 'none';
+        }
+    });
+    btnAgregarMovil.addEventListener('click', () => {
+        const nombre = prompt('Ingrese el nombre del nuevo móvil (ej: MOVIL RICCHERI):');
+        if (!nombre || nombre.trim() === "") return;
+        const patente = prompt(`Ingrese la patente para ${nombre}:`);
+        if (!patente || patente.trim() === "") return;
+        const nombreNormalizado = nombre.trim().toUpperCase();
+        if (moviles.some(m => m.nombre === nombreNormalizado)) {
+            mostrarNotificacion('Error: Ya existe un móvil con ese nombre.', 'error');
+            return;
+        }
+        const nuevoMovil = { nombre: nombreNormalizado, patente: patente.trim().toUpperCase(), cargasCombustible: [] };
+        moviles.push(nuevoMovil);
+        moviles.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        guardarDatosMoviles();
+        renderizarSelectMoviles();
+        selectMovil.value = nuevoMovil.nombre;
+        renderizarDetallesMovil();
+        mostrarNotificacion(`Móvil "${nuevoMovil.nombre}" agregado.`, 'success');
+    });
+    selectMovil.addEventListener('change', renderizarDetallesMovil);
+    formCargaCombustible.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const movil = moviles.find(m => m.nombre === selectMovil.value);
+        if (!movil) return;
+        const ticket = inputTicket.value.trim();
+        const kilometraje = inputKilometraje.value;
+        if (!ticket || !kilometraje) {
+            mostrarNotificacion('Error: Ticket y kilometraje son obligatorios.', 'error');
+            return;
+        }
+        movil.cargasCombustible.push({ ticket: ticket, kilometraje: parseInt(kilometraje) });
+        guardarDatosMoviles();
+        renderizarDetallesMovil();
+        formCargaCombustible.reset();
+        mostrarNotificacion('Carga registrada.');
+    });
+
+    movilesInicializado = true;
+    console.log('Gestión de Móviles inicializado correctamente.');
+}
+// =========================================================================
+// ====== FIN: NUEVA FUNCIÓN PARA INICIALIZAR GESTIÓN DE MÓVILES =========
+// =========================================================================
+
+const handleLogin = async (event) => { 
+    event.preventDefault(); 
+    loginButton.disabled = true; 
+    loginButton.textContent = 'Accediendo...'; 
+    loginError.style.display = 'none'; 
+    const email = document.getElementById('email').value, password = document.getElementById('password').value; 
+    try { 
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); 
+        if (error) throw error; 
+        const { data: profile, error: profileError } = await supabaseClient.from('profiles').select('role').eq('id', data.user.id).single(); 
+        if (profileError) throw profileError; 
+        loginContainer.style.display = 'none'; 
+        mainContent.style.display = 'block'; 
+        currentUserEmail = data.user.email; 
+        currentUserRole = profile.role || 'operator'; 
+        userEmailDisplay.textContent = currentUserEmail; 
+        userRoleDisplay.textContent = currentUserRole; 
+        await inicializarPanelesYDatos(); 
+        escucharCambiosVias(); 
+        // <<<<----- CAMBIO #1: LLAMADA A LA NUEVA FUNCIÓN ----->>>>
+        inicializarGestionMoviles();
+    } catch (error) { 
+        console.error('Error de login:', error.message); 
+        loginError.style.display = 'block'; 
+        mostrarNotificacion('Usuario o contraseña incorrectos.', 'error'); 
+    } finally { 
+        loginButton.disabled = false; 
+        loginButton.textContent = 'Acceder'; 
+    } 
+};
+
+const checkUser = async () => { 
+    const { data: { session } } = await supabaseClient.auth.getSession(); 
+    if (session) { 
+        const { data: profile, error: profileError } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single(); 
+        if (profileError) { 
+            await handleLogout(); 
+            return; 
+        } 
+        loginContainer.style.display = 'none'; 
+        mainContent.style.display = 'block'; 
+        currentUserEmail = session.user.email; 
+        currentUserRole = profile.role || 'operator'; 
+        userEmailDisplay.textContent = currentUserEmail; 
+        userRoleDisplay.textContent = currentUserRole; 
+        await inicializarPanelesYDatos(); 
+        escucharCambiosVias(); 
+        // <<<<----- CAMBIO #2: LLAMADA A LA NUEVA FUNCIÓN ----->>>>
+        inicializarGestionMoviles();
+    } else { 
+        loginContainer.style.display = 'block'; 
+        mainContent.style.display = 'none'; 
+    } 
+};
+
 const handleLogout = async () => { if (canalVias) { supabaseClient.removeChannel(canalVias); canalVias = null; } await supabaseClient.auth.signOut(); mainContent.style.display = 'none'; loginContainer.style.display = 'block'; adminTasksContainer.style.display = 'none'; currentUserEmail = null; currentUserRole = 'operator'; };
 function cerrarModal() { modal.style.display = 'none'; viaActualModal = null; }
 
@@ -452,141 +629,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if(downloadReportBtn) {
         downloadReportBtn.addEventListener('click', descargarReporteCSV);
     }
-
-    // =========================================================================
-    // ====== CORRECCIÓN: INICIALIZACIÓN Y EVENTOS DE MÓVILES (MOVIDO AQUÍ) =====
-    // =========================================================================
-
-    // --- Array para los móviles
-    let moviles = [];
-
-    // --- Se declaran las variables de los elementos del DOM AHORA, que ya existen.
-    const openMovilesModalBtn = document.getElementById('open-moviles-modal-btn');
-    const modalMoviles = document.getElementById('modal-moviles');
-    const closeModalMovilesBtn = modalMoviles.querySelector('.close-button');
-    const btnAgregarMovil = document.getElementById('btn-agregar-movil');
-    const selectMovil = document.getElementById('select-movil');
-    const infoMovilSeleccionado = document.getElementById('info-movil-seleccionado');
-    const infoPatente = document.getElementById('info-patente');
-    const formCargaCombustible = document.getElementById('form-carga-combustible');
-    const inputTicket = document.getElementById('input-ticket');
-    const inputKilometraje = document.getElementById('input-kilometraje');
-    const historialCargas = document.getElementById('historial-cargas');
-
-    // --- Funciones de Móviles (pueden definirse aquí o fuera, pero es más limpio aquí)
-    const cargarDatosMoviles = () => {
-        const movilesGuardados = localStorage.getItem('movilesSector');
-        if (movilesGuardados) {
-            moviles = JSON.parse(movilesGuardados);
-        }
-    };
-    const guardarDatosMoviles = () => {
-        localStorage.setItem('movilesSector', JSON.stringify(moviles));
-    };
-    const renderizarDetallesMovil = () => {
-        const nombreMovilSeleccionado = selectMovil.value;
-        const movil = moviles.find(m => m.nombre === nombreMovilSeleccionado);
-        if (movil) {
-            infoMovilSeleccionado.style.display = 'block';
-            infoPatente.textContent = movil.patente;
-            historialCargas.innerHTML = '';
-            if (movil.cargasCombustible && movil.cargasCombustible.length > 0) {
-                movil.cargasCombustible.slice().reverse().forEach(carga => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<strong>Ticket:</strong> ${carga.ticket} - <strong>KM:</strong> ${carga.kilometraje}`;
-                    historialCargas.appendChild(li);
-                });
-            } else {
-                historialCargas.innerHTML = '<li>No hay cargas registradas para este móvil.</li>';
-            }
-        } else {
-            infoMovilSeleccionado.style.display = 'none';
-        }
-    };
-    const renderizarSelectMoviles = () => {
-        selectMovil.innerHTML = '';
-        if (moviles.length > 0) {
-            moviles.forEach(movil => {
-                const option = document.createElement('option');
-                option.value = movil.nombre;
-                option.textContent = movil.nombre;
-                selectMovil.appendChild(option);
-            });
-        } else {
-            const option = document.createElement('option');
-            option.textContent = 'No hay móviles cargados';
-            option.disabled = true;
-            selectMovil.appendChild(option);
-        }
-        renderizarDetallesMovil();
-    };
-
-    // --- Carga inicial y Event Listeners de Móviles
-    cargarDatosMoviles();
-
-    openMovilesModalBtn.addEventListener('click', () => {
-        modalMoviles.style.display = 'block';
-        renderizarSelectMoviles();
-    });
-
-    closeModalMovilesBtn.addEventListener('click', () => {
-        modalMoviles.style.display = 'none';
-    });
-    
-    window.addEventListener('click', (event) => {
-        if (event.target === modalMoviles) {
-            modalMoviles.style.display = 'none';
-        }
-    });
-
-    btnAgregarMovil.addEventListener('click', () => {
-        const nombre = prompt('Ingrese el nombre del nuevo móvil (ej: MOVIL RICCHERI):');
-        if (!nombre || nombre.trim() === "") return;
-        const patente = prompt(`Ingrese la patente para ${nombre}:`);
-        if (!patente || patente.trim() === "") return;
-        const nombreNormalizado = nombre.trim().toUpperCase();
-        if (moviles.some(m => m.nombre === nombreNormalizado)) {
-            mostrarNotificacion('Error: Ya existe un móvil con ese nombre.', 'error');
-            return;
-        }
-        const nuevoMovil = {
-            nombre: nombreNormalizado,
-            patente: patente.trim().toUpperCase(),
-            cargasCombustible: []
-        };
-        moviles.push(nuevoMovil);
-        moviles.sort((a, b) => a.nombre.localeCompare(b.nombre));
-        guardarDatosMoviles();
-        renderizarSelectMoviles();
-        selectMovil.value = nuevoMovil.nombre;
-        renderizarDetallesMovil();
-        mostrarNotificacion(`Móvil "${nuevoMovil.nombre}" agregado correctamente.`);
-    });
-
-    selectMovil.addEventListener('change', renderizarDetallesMovil);
-
-    formCargaCombustible.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nombreMovilSeleccionado = selectMovil.value;
-        const movil = moviles.find(m => m.nombre === nombreMovilSeleccionado);
-        if (!movil) {
-            mostrarNotificacion('Error: Por favor, seleccione un móvil válido.', 'error');
-            return;
-        }
-        const ticket = inputTicket.value.trim();
-        const kilometraje = inputKilometraje.value;
-        if (!ticket || !kilometraje) {
-            mostrarNotificacion('Error: Ticket y kilometraje son obligatorios.', 'error');
-            return;
-        }
-        const nuevaCarga = { ticket: ticket, kilometraje: parseInt(kilometraje) };
-        movil.cargasCombustible.push(nuevaCarga);
-        guardarDatosMoviles();
-        renderizarDetallesMovil();
-        formCargaCombustible.reset();
-        mostrarNotificacion('Carga de combustible registrada.');
-    });
-    // =========================================================================
-    // ============================= FIN DE LA CORRECCIÓN ======================
-    // =========================================================================
 });
